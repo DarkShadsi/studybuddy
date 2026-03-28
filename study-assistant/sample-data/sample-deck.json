@@ -1,0 +1,19 @@
+{
+  "deck_name": "CMSC 127 Finals",
+  "description": "Key topics for the finals exam",
+  "exported_at": "2025-04-10T20:00:00",
+  "cards": [
+    {
+      "question": "What does JDBC stand for?",
+      "answer": "Java Database Connectivity"
+    },
+    {
+      "question": "What is normalization?",
+      "answer": "The process of organizing a database to reduce redundancy"
+    },
+    {
+      "question": "What is a Primary Key?",
+      "answer": "A unique identifier for each record in a table"
+    }
+  ]
+}
