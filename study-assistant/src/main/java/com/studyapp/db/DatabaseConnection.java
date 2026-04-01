@@ -17,4 +17,12 @@ public class DatabaseConnection {
     public static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(URL, USER, PASS);
     }
+
+    public static boolean authenticate(String username, String password) {
+        try (Connection conn = DriverManager.getConnection(URL, username, password)) {
+            return conn != null;
+        } catch (SQLException e) {
+            return false;
+        }
+    }
 }

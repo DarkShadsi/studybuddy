@@ -6,7 +6,7 @@ public class Deck {
     private int deckID;
     private String name;
     private String description;
-    LocalDateTime createdAt;
+    private LocalDateTime createdAt;
 
     public Deck(){}
 
