@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.studyapp.dao.FlashcardDAO;
 import com.studyapp.db.DatabaseConnection;
@@ -13,7 +15,7 @@ import com.studyapp.model.ObjectFactory;
 public class FlashcardDAOImpl implements FlashcardDAO{
     @Override
     public void insert(Flashcard flashcard) throws SQLException {
-        String sql = "INSERT INTO flashcard (deck_id, question, answer, difficulty, created_at) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO card (deck_id, question, answer, difficulty, created_at) VALUES (?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, flashcard.getDeck().getDeckID());
@@ -27,7 +29,7 @@ public class FlashcardDAOImpl implements FlashcardDAO{
 
     @Override
     public void update(Flashcard flashcard) throws SQLException {
-        String sql = "UPDATE flashcard SET question = ?, answer = ?, difficulty = ? WHERE card_id = ?";
+        String sql = "UPDATE card SET question = ?, answer = ?, difficulty = ? WHERE card_id = ?";
         try(Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, flashcard.getQuestion());
@@ -40,7 +42,7 @@ public class FlashcardDAOImpl implements FlashcardDAO{
 
     @Override
     public void delete(int cardID) throws SQLException{
-        String sql = "DELETE FROM flashcard WHERE card_id=?";
+        String sql = "DELETE FROM card WHERE card_id=?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, cardID);
@@ -52,7 +54,7 @@ public class FlashcardDAOImpl implements FlashcardDAO{
 
     @Override
     public Flashcard findByID(int cardID) {
-        String sql = "SELECT * FROM flashcard WHERE card_id=?";
+        String sql = "SELECT * FROM card WHERE card_id=?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, cardID);
@@ -65,4 +67,19 @@ public class FlashcardDAOImpl implements FlashcardDAO{
         return null;
     }
 
+    @Override
+    public List<Flashcard> getAllFlashcards() {
+        List<Flashcard> allCards = new ArrayList<>();
+        String sql = "SELECT * FROM card";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                allCards.add(new ObjectFactory().createNewCard(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return allCards;
+    }
 }

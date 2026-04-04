@@ -5,7 +5,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
+import com.mysql.cj.Session;
 import com.studyapp.dao.StudySessionDAO;
 import com.studyapp.db.DatabaseConnection;
 import com.studyapp.model.ObjectFactory;
@@ -47,5 +50,21 @@ public class StudySessionDAOImpl implements StudySessionDAO{
             e.printStackTrace();
         }
         return null;
+    }
+
+    @Override
+    public List<StudySession> getAllSessions(){
+        List<StudySession> allSessions = new ArrayList<>();
+        String sql = "SELECT * FROM study_session";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                allSessions.add(new ObjectFactory().createStudySession(rs));
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+        return allSessions;
     }
 }

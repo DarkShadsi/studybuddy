@@ -4,11 +4,14 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.studyapp.dao.CardReviewDAO;
 import com.studyapp.db.DatabaseConnection;
 import com.studyapp.model.CardReview;
 import com.studyapp.model.ObjectFactory;
+import com.studyapp.model.StudySession;
 
 public class CardReviewDAOImpl implements CardReviewDAO{
     @Override
@@ -36,5 +39,21 @@ public class CardReviewDAOImpl implements CardReviewDAO{
             e.printStackTrace();
         }
         return null;
+    }
+
+    @Override
+    public List<CardReview> getAllReviews(){
+        List<CardReview> allReviews = new ArrayList<>();
+        String sql = "SELECT * FROM card_review";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                allReviews.add(new ObjectFactory().createNewReview(rs));
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+        return allReviews;
     }
 }

@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.studyapp.dao.DeckDAO;
 import com.studyapp.db.DatabaseConnection;
@@ -61,5 +63,21 @@ public class DeckDAOImpl implements DeckDAO{
             e.printStackTrace();
         }
         return null;
+    }
+
+    @Override
+    public List<Deck> getAllDecks(){
+        List<Deck> allDecks = new ArrayList<>();
+        String sql = "SELECT * FROM deck";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery()) {
+            while(rs.next()){
+                allDecks.add(new ObjectFactory().createNewDeck(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return allDecks;
     }
 }
