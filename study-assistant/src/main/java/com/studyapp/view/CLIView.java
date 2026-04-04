@@ -54,7 +54,7 @@ public class CLIView {
                 switch (choice) {
                     case 1 -> { manageDecks();}
                     case 2 -> { allCards(); askNextAction(); }
-                    case 3 -> { System.exit(0); }
+                    case 4 -> { System.exit(0); }
                     default -> System.out.println("Invalid choice.\n");
                 }
             } catch (Exception e) {

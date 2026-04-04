@@ -1,6 +1,8 @@
 package com.studyapp;
 
+import com.studyapp.controller.MainController;
 import com.studyapp.view.CLIView;
+
 
 public class Main {
     public static void main(String[] args) {

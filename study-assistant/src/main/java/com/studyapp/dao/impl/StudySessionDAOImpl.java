@@ -8,7 +8,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mysql.cj.Session;
 import com.studyapp.dao.StudySessionDAO;
 import com.studyapp.db.DatabaseConnection;
 import com.studyapp.model.ObjectFactory;
