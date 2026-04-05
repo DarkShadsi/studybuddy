@@ -42,7 +42,7 @@ study-assistant/
 ## Database Setup
 
 1. Create the `study_assistant` database in MySQL.
-2. Import [TestDB.sql](C:\Users\edsel\study-assistant\TestDB.sql) to create the tables and seed data.
+2. Import [`TestDB.sql`](./TestDB.sql) to create the tables and seed data.
 3. Confirm the database is running before starting the application.
 
 The application stores the database connection URL in [db.properties](C:\Users\edsel\study-assistant\src\main\resources\db.properties) and prompts for your MySQL username and password on first run.
@@ -52,14 +52,14 @@ The application stores the database connection URL in [db.properties](C:\Users\e
 From the project root:
 
 ```powershell
-cd C:\Users\edsel\study-assistant
+cd C:\...\study-assistant
 mvn compile exec:java
 ```
 
 If you want to compile and run without Maven:
 
 ```powershell
-cd C:\Users\edsel\study-assistant
+cd C:\...\study-assistant
 javac -d out (Get-ChildItem -Recurse -Filter *.java src\main\java | ForEach-Object FullName)
 java -cp out com.studyapp.Main
 ```
