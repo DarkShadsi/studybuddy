@@ -11,4 +11,5 @@ public interface FlashcardDAO {
     public void delete(int cardID) throws SQLException;
     public Flashcard findByID(int cardID);
     public List<Flashcard> getAllFlashcards();
+    public int getLastID();
 }

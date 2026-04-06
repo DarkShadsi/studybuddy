@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.studyapp.dao.FlashcardDAO;
 import com.studyapp.dao.impl.CardReviewDAOImpl;
 import com.studyapp.dao.impl.DeckDAOImpl;
 import com.studyapp.dao.impl.FlashcardDAOImpl;
@@ -39,8 +40,12 @@ public class MainController {
     private List<Deck> addedDecks    = new ArrayList<>();
     private Map<Integer, Deck> modifiedDecks = new HashMap<>();
     private List<Integer> deletedDecks  = new ArrayList<>();
+    private List<Flashcard> addedFlashcards = new ArrayList<>();
+    private Map<Integer, Flashcard> modifiedFlashcards = new HashMap<>();
+    private List<Integer> deletedFlashcards  = new ArrayList<>();
 
     private int lastDeckID = 999;
+    private int lastCardID = 999;
 
     // --------- AUTHENTICATION --------------
     public boolean tryAutoLogin() {
@@ -96,7 +101,11 @@ public class MainController {
             modifiedDecks.remove(deckID);
             deletedDecks.add(deckID);
         }
-        //MUST ALSO DELETE ALL CARDS IN THIS DECK
+
+        //DELETE ALL CARDS IN THIS DECK
+        for(Flashcard flashcard: getFlashcardsByDeck(deckID)){
+            deleteFlashcard(flashcard.getCardID());
+        }
         //MUST ALSO DELETE ALL SESSIONS ASSOCIATED IN THIS DECK
     }
 
@@ -138,14 +147,55 @@ public class MainController {
                 .toList();
     }
 
+    public void createFlashcard(int deckID, String question, String answer, String difficulty) throws CustomException{
+        //CHECK IF DECK EXISTS
+        Deck deck = decks.stream()
+                .filter(i -> i.getDeckID() == deckID)
+                .findFirst().orElse(null);
+        if (deck == null) {
+            throw new CustomException("Deck does not exist.");
+        }
+
+        Flashcard flashcard = new Flashcard(++lastCardID, deck, question, answer, difficulty, LocalDateTime.now());
+        //TODO: validate card constraints
+        flashcards.add(flashcard);
+        addedFlashcards.add(flashcard);
+    }
+
     public void updateFlashcard(Flashcard flashcard) throws CustomException {
-        //TODO: implement card update
-        throw new CustomException("Not implemented yet.");
+        Flashcard existing = flashcards.stream()
+                .filter(i -> i.getCardID() == flashcard.getCardID())
+                .findFirst().orElse(null);
+        if (existing == null) {
+            throw new CustomException("Flashcard not found.");
+        }
+
+        flashcards.remove(existing);
+        flashcards.add(flashcard);
+
+        if (addedFlashcards.contains(existing)) {
+            addedFlashcards.remove(existing);
+            addedFlashcards.add(flashcard);
+        } else {
+            modifiedFlashcards.put(flashcard.getCardID(), flashcard);
+        }
     }
 
     public void deleteFlashcard(int flashcardID) throws CustomException {
-        //TODO: implement card deletion
-        throw new CustomException("Not implemented yet.");
+        Flashcard existing = flashcards.stream()
+                .filter(i -> i.getCardID() == flashcardID)
+                .findFirst().orElse(null);
+        if (existing == null) {
+            throw new CustomException("No record matched. No row was deleted.");
+        }
+        flashcards.remove(existing);
+
+        if (addedFlashcards.contains(existing)) {
+            addedFlashcards.remove(existing);
+        } else {
+            modifiedFlashcards.remove(flashcardID);
+            deletedFlashcards.add(flashcardID);
+        }
     }
 
     //----------------- DATA -----------------------
@@ -154,6 +204,7 @@ public class MainController {
             decks = deckDaoImpl.getAllDecks();
             lastDeckID = deckDaoImpl.getLastID();
             flashcards = flashcardDAOImpl.getAllFlashcards();
+            lastCardID = flashcardDAOImpl.getLastID();
             studySessions = studySessionDAOImpl.getAllSessions();
             cardReviews = cardReviewDAOImpl.getAllReviews();
         }catch(Exception e){

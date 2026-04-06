@@ -82,4 +82,17 @@ public class FlashcardDAOImpl implements FlashcardDAO{
         }
         return allCards;
     }
+
+    @Override
+    public int getLastID(){
+        String sql = "SELECT MAX(card_id) as max_id FROM card";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return rs.getInt("max_id");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 999;
+    }
 }

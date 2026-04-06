@@ -103,17 +103,7 @@ public class CLIView {
                     }
                     break;
                 case 2:
-                    System.out.println("\n----- ADD DECK -----\n");
-                    System.out.print("Enter Deck Name to be added: ");
-                    String deckName = readLine();
-                    System.out.println("Enter Deck description (Enter for no description): \n   " );
-                    String description = readLine();
-                    try {
-                        mc.createDeck(deckName, description);
-                        System.out.println("Deck added successfully.");
-                    } catch (CustomException e) {
-                        System.out.println(e.getMessage() + "\n");
-                    }
+                    addDeck();
                     break;
                 case 3:
                     mainMenu();
@@ -124,14 +114,14 @@ public class CLIView {
 
     void deckDescription(Deck deck){
         while(true){
-            System.out.println("\n --- " + deck.getName() + " ---\n");
+            System.out.println("\n --- " + deck.getName().toUpperCase() + " ---\n");
             System.out.println("Deck ID: " + deck.getDeckID());
             System.out.println("Cards: " + mc.getFlashcardsByDeck(deck.getDeckID()).size());
             System.out.println("Description: " + deck.getDescription());
             System.out.println("Created at: " + deck.getCreatedAt());
 
-            System.out.println("ACTIONS: ");
-            System.out.println("1. EDIT name\n2. EDIT Description\n3. LIST cards in this deck\n4. DELETE deck\n5. BACK");
+            System.out.println("\nACTIONS: ");
+            System.out.println("1. EDIT name\n2. EDIT Description\n3. LIST cards in this deck\n4. ADD card\n5. DELETE deck\n6. BACK");
             System.out.print("Enter action: " );
             int choice = readInt();
             switch(choice){
@@ -147,10 +137,13 @@ public class CLIView {
                     listCards(mc.getFlashcardsByDeck(deck.getDeckID()));
                     break;
                 case 4:
+                    addCard(deck.getDeckID());
+                    break;
+                case 5:
                     deleteDeck(deck.getDeckID());
                     mainMenu();
                     break;
-                case 5:
+                case 6:
                     mainMenu();
                     break;
 
@@ -158,6 +151,21 @@ public class CLIView {
         }
     }
 
+    void addDeck(){
+        System.out.println("\n----- ADD DECK -----\n");
+        System.out.print("Enter Deck Name to be added: ");
+        String deckName = readLine();
+        System.out.print("Enter Deck description (Enter for no description):\n      " );
+        String description = readLine();
+        try {
+            mc.createDeck(deckName, description);
+            System.out.println("Deck added successfully.");
+                System.out.println(BAR + "\n");
+        } catch (CustomException e) {
+            System.out.println(e.getMessage() + "\n");
+            System.out.println(BAR + "\n");
+        }
+    }
     void editDeck(int attribute, Deck deck){
         String value = "";
         try{
@@ -174,6 +182,7 @@ public class CLIView {
                     break;
             }
             mc.update(deck);
+            System.out.println("Deck updated successfully.\n");
         }catch(CustomException e){
             System.out.println(e.getMessage());
         }
@@ -183,8 +192,10 @@ public class CLIView {
         try {
             mc.deleteDeck(deckID);
             System.out.println("Deck with deck ID: " + deckID + " was deleted.");
+            System.out.println(BAR + "\n");
         } catch (CustomException e) {
             System.out.println(e.getMessage());
+            System.out.println(BAR + "\n");
         }
     }
 
@@ -264,6 +275,25 @@ public class CLIView {
         }
     }
 
+    void addCard(int deckID){
+        System.out.println("\n--- ADD CARD ---\n");
+        System.out.print("Enter question: ");
+        String question = readLine();
+        System.out.print("Enter answer: ");
+        String answer = readLine();
+        System.out.print("Enter difficulty level: ");
+        String difficulty = readLine();
+
+        try {
+            mc.createFlashcard(deckID,question, answer, difficulty);
+            System.out.println("Card added successfully.\n");
+            System.out.println(BAR + "\n");
+        } catch (CustomException e) {
+            System.out.println(e.getMessage() + "\n");
+            System.out.println(BAR + "\n");
+        }
+    }
+
     void editCard(int attribute, Flashcard card) {
         String value = "";
         try {
@@ -286,9 +316,11 @@ public class CLIView {
             }
 
             mc.updateFlashcard(card);
-            System.out.println("Card updated successfully.\n");
+            System.out.println("Card updated successfully.");
+            System.out.println(BAR + "\n");
         } catch(CustomException e) {
             System.out.println(e.getMessage());
+            System.out.println(BAR + "\n");
         }
     }
 
@@ -296,8 +328,10 @@ public class CLIView {
         try {
             mc.deleteFlashcard(cardID);  // Assuming this method exists in MainController
             System.out.println("Card with ID: " + cardID + " was deleted.");
+            System.out.println(BAR + "\n");
         } catch (CustomException e) {
             System.out.println(e.getMessage());
+            System.out.println(BAR + "\n");
         }
     }
 
