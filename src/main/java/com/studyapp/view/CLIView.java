@@ -1,12 +1,15 @@
 package com.studyapp.view;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Scanner;
 
 import com.studyapp.controller.CustomException;
 import com.studyapp.controller.MainController;
+import com.studyapp.model.CardReview;
 import com.studyapp.model.Deck;
 import com.studyapp.model.Flashcard;
+import com.studyapp.model.StudySession;
 
 //MAINLY FOR TESTING OUT IMPLEMENTED METHODS ONLY WITHOUT WORRYING GUI
 public class CLIView {
@@ -55,6 +58,7 @@ public class CLIView {
                     case 1 -> { manageDecks();}
                     case 2 -> { listCards(mc.allFlashcards());}
                     case 4 -> { System.exit(0); }
+
                     default -> System.out.println("Invalid choice.\n");
                 }
             } catch (Exception e) {
@@ -63,6 +67,7 @@ public class CLIView {
             }
         }
     }
+
 
 //------------ ALL ABOUT DECKS ----------------------//
     void manageDecks(){
@@ -121,29 +126,32 @@ public class CLIView {
             System.out.println("Created at: " + deck.getCreatedAt());
 
             System.out.println("\nACTIONS: ");
-            System.out.println("1. EDIT name\n2. EDIT Description\n3. LIST cards in this deck\n4. ADD card\n5. DELETE deck\n6. BACK");
+            System.out.println("1. STUDY\n2. EDIT name\n3. EDIT Description\n4. LIST cards in this deck\n5. ADD card\n6. DELETE deck\n7. BACK");
             System.out.print("Enter action: " );
             int choice = readInt();
             switch(choice){
                 case 1:
+                    study(deck);
+                    break;
+                case 2:
                     editDeck(0, deck);
                     deckDescription(deck);
                     break;
-                case 2:
+                case 3:
                     editDeck(1, deck);
                     deckDescription(deck);
                     break;
-                case 3:
+                case 4:
                     listCards(mc.getFlashcardsByDeck(deck.getDeckID()));
                     break;
-                case 4:
+                case 5:
                     addCard(deck.getDeckID());
                     break;
-                case 5:
+                case 6:
                     deleteDeck(deck.getDeckID());
                     mainMenu();
                     break;
-                case 6:
+                case 7:
                     mainMenu();
                     break;
 
@@ -335,8 +343,207 @@ public class CLIView {
         }
     }
 
+    //------------ ALL ABOUT STUDY SESSIONS ----------------------
+    void study(Deck deck){
+        LocalDateTime started = LocalDateTime.now();
+        LocalDateTime ended = LocalDateTime.now();
+        List<Flashcard> flashcards = mc.getFlashcardsByDeck(deck.getDeckID());
+        StudySession studySession = new StudySession();
 
-    //-----------       HELPER METHODS --------------------
+        try {
+            studySession = mc.createStudySession(deck.getDeckID(), started);
+        }catch (CustomException e){
+            System.out.println(e.getMessage());
+        }
+
+        int cardCounter = 1;
+        while (cardCounter <= flashcards.size()){
+            System.out.println(BAR+"\n--- STUDYING " + deck.getName().toUpperCase() + " ---\n");
+            LocalDateTime reviewedAt = LocalDateTime.now();
+            Flashcard card = flashcards.get(cardCounter - 1);
+            System.out.println(cardCounter++ + ". " + card.getQuestion() + "\n");
+
+            System.out.print("Enter answer: ");
+            String answer = readLine().toLowerCase();
+            boolean isCorrect = false;
+            if(answer.equals(card.getAnswer().toLowerCase())){
+                System.out.println("\nCorrect.\n");
+                isCorrect = true;
+            }else{
+                System.out.println("\nNot quite right.\n");
+            }
+
+            try {
+                mc.createCardReview(studySession.getSessionID(), card.getCardID(), reviewedAt, isCorrect);
+            } catch (CustomException e) {
+                System.out.println(e.getMessage());
+            }
+
+            System.out.print("1. NEXT\n2. RETRY\n3. PREVIOUS\n4. FINISH STUDY\nENTER choice: ");
+            int choice = readInt();
+            switch(choice){
+                case 1:
+                    break;
+                case 2:
+                    cardCounter--;
+                    break;
+                case 3:
+                    if(cardCounter == 2){
+                        cardCounter = 1;
+                        break;
+                    }
+                    cardCounter = cardCounter-2;
+                    break;
+                case 4:
+                    try {
+                        studySession.setEndedAt(LocalDateTime.now());
+                        mc.updateEndStudySession(studySession);
+                    } catch (CustomException e) {
+                        System.out.println(e.getMessage());
+                    }
+                    return;
+                default:
+                    System.out.println("Invalid choice.");
+                    break;
+            }
+        }
+        System.out.println("\n" + BAR + "\nWOW YOU FINISHED THIS DECK!\n"+ BAR + "\n");
+    }
+
+    void printSessions(){
+        while (true) {
+            System.out.println(BAR + "\n--- ALL SESSIONS ---");
+            List<StudySession> sessions = mc.getAllSessions();
+            if (sessions.isEmpty()) {
+                System.out.println("No sessions available.\n");
+                return;
+            }
+
+            System.out.printf("%-6s %-20s %-20s\n", "ID", "DECK NAME", "STARTED AT");
+            for(StudySession session: sessions){
+                System.out.printf("%-6d %-20s %-20s\n", session.getSessionID(), session.getDeck().getName(), session.getStartedAt());
+            }
+
+            System.out.print("\n1. SELECT Session\n2. Main Menu\nENTER choice: ");
+            int choice = readInt();
+            switch(choice){
+                case 1:
+                    System.out.println("\n----- SELECT SESSION -----\n");
+                    System.out.print("Enter Session ID to be selected: ");
+                    int sessionID = readInt();
+                    StudySession selectedSession = null;
+                    for (StudySession session : sessions) {
+                        if (session.getSessionID() == sessionID) {
+                            selectedSession = session;
+                            break;
+                        }
+                    }
+
+                    if (selectedSession != null) {
+                        sessionDescription(selectedSession);
+                        return;
+                    } else {
+                        System.out.println("Session ID not found. Please try again.");
+                    }
+                    break;
+                case 2:
+                    mainMenu();
+                    return;
+            }
+        }
+    }
+
+    void sessionDescription(StudySession session){
+        while(true){
+            System.out.println("\n --- Session " + session.getSessionID() + " ---\n");
+            System.out.println("Session ID: " + session.getSessionID());
+            System.out.println("Deck: " + session.getDeck().getName());
+            System.out.println("Started at: " + session.getStartedAt());
+            System.out.println("Ended at: " + (session.getEndedAt() != null ? session.getEndedAt() : "Still studying"));
+
+            System.out.println("\nACTIONS: ");
+            System.out.println("1. BACK");
+            System.out.print("Enter action: " );
+            int choice = readInt();
+            switch(choice){
+                case 1:
+                    return;
+                default:
+                    System.out.println("Invalid choice.\n");
+            }
+        }
+    }
+
+    //---------- ALL ABOUT CARD REVIEW ----------------
+    void printCardReviews(){
+        while (true) {
+            System.out.println(BAR + "\n--- ALL CARD REVIEWS ---");
+            List<CardReview> reviews = mc.getAllCardReviews();
+            if (reviews.isEmpty()) {
+                System.out.println("No card reviews available.\n");
+                return;
+            }
+
+            System.out.printf("%-6s %-30s %-12s\n", "ID", "QUESTION", "IS CORRECT");
+            for(CardReview review: reviews){
+                String question = review.getFlashcard().getQuestion() == null ? "" : review.getFlashcard().getQuestion();
+                String isCorrect = review.isCorrect() ? "YES" : "NO";
+                System.out.printf("%-6d %-30.25s %-12s\n", review.getReviewID(), question, isCorrect);
+            }
+
+            System.out.print("\n1. SELECT Review\n2. Main Menu\nENTER choice: ");
+            int choice = readInt();
+            switch(choice){
+                case 1:
+                    System.out.println("\n----- SELECT REVIEW -----\n");
+                    System.out.print("Enter Review ID to be selected: ");
+                    int reviewID = readInt();
+                    CardReview selectedReview = null;
+                    for (CardReview review : reviews) {
+                        if (review.getReviewID() == reviewID) {
+                            selectedReview = review;
+                            break;
+                        }
+                    }
+
+                    if (selectedReview != null) {
+                        reviewDescription(selectedReview);
+                        return;
+                    } else {
+                        System.out.println("Review ID not found. Please try again.");
+                    }
+                    break;
+                case 2:
+                    mainMenu();
+                    return;
+            }
+        }
+    }
+
+    void reviewDescription(CardReview cardReview){
+        while(true){
+            System.out.println("\n --- Card Review " + cardReview.getReviewID() + " ---\n");
+            System.out.println("Review ID: " + cardReview.getReviewID());
+            System.out.println("Question: " + cardReview.getFlashcard().getQuestion());
+            System.out.println("Answer: " + cardReview.getFlashcard().getAnswer());
+            System.out.println("Your Answer: " + (cardReview.isCorrect() ? "Correct" : "Incorrect"));
+            System.out.println("Reviewed at: " + cardReview.getReviewedAt());
+            System.out.println("Session ID: " + cardReview.getStudySession().getSessionID());
+
+            System.out.println("\nACTIONS: ");
+            System.out.println("1. BACK");
+            System.out.print("Enter action: " );
+            int choice = readInt();
+            switch(choice){
+                case 1:
+                    return;
+                default:
+                    System.out.println("Invalid choice.\n");
+            }
+        }
+    }
+
+    //-----------  HELPER METHODS --------------------
     void printMainMenu() {
         System.out.println(BAR + "\n");
         System.out.println("--- STUDY ASSISTANT APP ---");
