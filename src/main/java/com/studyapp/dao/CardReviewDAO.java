@@ -9,4 +9,5 @@ public interface CardReviewDAO {
     public void insert(CardReview cardReview) throws SQLException;
     public CardReview findByID(int reviewID);
     public List<CardReview> getAllReviews();
+    public int getLastID();
 }

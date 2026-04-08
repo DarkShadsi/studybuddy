@@ -8,7 +8,8 @@ import com.studyapp.model.StudySession;
 
 public interface StudySessionDAO {
     public void insert(StudySession studySession) throws SQLException;
-    public void updateEnd(LocalDateTime endedAt) throws SQLException;
+    public void updateEnd(int sessionID, LocalDateTime endedAt) throws SQLException;
     public StudySession findByID(int sessionID);
     public List<StudySession> getAllSessions();
+    public int getLastID();
 }

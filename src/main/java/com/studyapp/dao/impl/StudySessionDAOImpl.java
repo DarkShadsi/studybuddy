@@ -16,22 +16,24 @@ import com.studyapp.model.StudySession;
 public class StudySessionDAOImpl implements StudySessionDAO{
     @Override
     public void insert(StudySession studySession) throws SQLException{
-        String sql = "INSERT INTO study_session (deck_id, started_at, ended_at) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO study_session (session_id, deck_id, started_at, ended_at) VALUES (?, ?, ?, ?)";
         try(Connection conn = DatabaseConnection.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, studySession.getDeck().getDeckID());
-            ps.setObject(2, studySession.getStartedAt());
-            ps.setObject(3, studySession.getEndedAt());
+            ps.setInt(1, studySession.getSessionID());
+            ps.setInt(2, studySession.getDeck().getDeckID());
+            ps.setObject(3, studySession.getStartedAt());
+            ps.setObject(4, studySession.getEndedAt());
             ps.executeUpdate();
         }
     }
 
     @Override
-    public void updateEnd(LocalDateTime endedAt) throws SQLException{
-        String sql = "UPDATE study_session SET ended_at = ?";
+    public void updateEnd(int sessionID, LocalDateTime endedAt) throws SQLException{
+        String sql = "UPDATE study_session SET ended_at = ? WHERE session_id = ?";
         try(Connection conn = DatabaseConnection.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)){
             ps.setObject(1, endedAt);
+            ps.setObject(2, sessionID);
             ps.executeUpdate();        
         }
     }
@@ -66,4 +68,18 @@ public class StudySessionDAOImpl implements StudySessionDAO{
         }
         return allSessions;
     }
+
+    @Override
+    public int getLastID(){
+        String sql = "SELECT MAX(session_id) as max_id FROM study_session";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return rs.getInt("max_id");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 999;
+    }
 }
+

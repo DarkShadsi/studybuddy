@@ -16,13 +16,14 @@ import com.studyapp.model.StudySession;
 public class CardReviewDAOImpl implements CardReviewDAO{
     @Override
     public void insert(CardReview cardReview) throws SQLException{
-        String sql = "INSERT INTO card_review (session_id, card_id, reviewed_at, is_correct) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO card_review (reeview_id, session_id, card_id, reviewed_at, is_correct) VALUES (?, ?, ?, ?, ?)";
         try(Connection conn = DatabaseConnection.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)){
-            ps.setInt(1, cardReview.getStudySession().getSessionID());
-            ps.setInt(2, cardReview.getFlashcard().getCardID());
-            ps.setObject(3, cardReview.getReviewedAt());
-            ps.setBoolean(4, cardReview.isCorrect());
+            ps.setInt(1, cardReview.getReviewID());
+            ps.setInt(2, cardReview.getStudySession().getSessionID());
+            ps.setInt(3, cardReview.getFlashcard().getCardID());
+            ps.setObject(4, cardReview.getReviewedAt());
+            ps.setBoolean(5, cardReview.isCorrect());
             ps.executeUpdate();
         }
     }
@@ -55,5 +56,19 @@ public class CardReviewDAOImpl implements CardReviewDAO{
             e.printStackTrace();
         }
         return allReviews;
+    }
+
+    @Override
+    public int getLastID(){
+        String sql = "SELECT MAX(review_id) as max_id FROM card_review";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return rs.getInt("max_id");
+        }
+        catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 999;
     }
 }
