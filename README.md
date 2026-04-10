@@ -45,15 +45,14 @@ study-assistant/
 2. Import [`TestDB.sql`](./TestDB.sql) to create the tables and seed data.
 3. Confirm the database is running before starting the application.
 
-The application stores the database connection URL in [db.properties](C:\Users\edsel\study-assistant\src\main\resources\db.properties) and prompts for your MySQL username and password on first run.
 
 ## Run
 
-From the project root:
+initialize the database first, then you can run the application using Maven:
 
 ```powershell
 cd C:\...\study-assistant
-mvn compile exec:java
+mvn javafx:run
 ```
 
 If you want to compile and run without Maven:
