@@ -1,14 +1,14 @@
 package com.studyapp.controller;
 
-import com.studyapp.dao.impl.FlashcardDAOImpl;
-import com.studyapp.model.Deck;
-import com.studyapp.model.Flashcard;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.studyapp.dao.impl.FlashcardDAOImpl;
+import com.studyapp.model.Deck;
+import com.studyapp.model.Flashcard;
 
 public class FlashcardController {
     private MainController mc;
@@ -29,31 +29,40 @@ public class FlashcardController {
         return new ArrayList<>(flashcards);
     }
 
-    public List<Flashcard> getHardFlashcards(){
+    public Flashcard getFlashcard(int flashcardID){
         return flashcards.stream()
-                .filter(i -> i.getDifficulty().equalsIgnoreCase("HARD"))
-                .toList();
+                .filter(i -> i.getCardID() == flashcardID)
+                .findFirst().orElse(null);
+    }
+
+    public List<Flashcard> getHardFlashcards(){
+    return flashcards.stream()
+            .filter(i -> i.getDifficulty() != null
+                    && i.getDifficulty().equalsIgnoreCase("HARD"))
+            .toList();
     }
 
     public List<Flashcard> getMediumFlashcards(){
         return flashcards.stream()
-                .filter(i -> i.getDifficulty().equalsIgnoreCase("MEDIUM"))
+                .filter(i -> i.getDifficulty() != null
+                        && i.getDifficulty().equalsIgnoreCase("MEDIUM"))
                 .toList();
     }
 
     public List<Flashcard> getEasyFlashcards(){
         return flashcards.stream()
-                .filter(i -> i.getDifficulty().equalsIgnoreCase("EASY"))
+                .filter(i -> i.getDifficulty() != null
+                        && i.getDifficulty().equalsIgnoreCase("EASY"))
                 .toList();
     }
 
     public List<Flashcard> getFlashcardsByDeck(int deckID){
         return flashcards.stream()
-                .filter(card -> card.getDeck().getDeckID() == deckID)
+                .filter(card -> card.getDeckID() == deckID)
                 .toList();
     }
 
-    public void createFlashcard(int deckID, String question, String answer, String difficulty) throws CustomException{
+    public Flashcard createFlashcard(int deckID, String question, String answer, String difficulty) throws CustomException{
         //CHECK IF DECK EXISTS
         Deck deck = mc.allDecks().stream()
                 .filter(i -> i.getDeckID() == deckID)
@@ -62,11 +71,12 @@ public class FlashcardController {
             throw new CustomException("Deck does not exist.");
         }
 
-        Flashcard flashcard = new Flashcard(lastCardID, deck, question, answer, difficulty, LocalDateTime.now());
+        Flashcard flashcard = new Flashcard(lastCardID, deck.getDeckID(), question, answer, difficulty, LocalDateTime.now());
         validateConstraints(flashcard);
         flashcards.add(flashcard);
         addedFlashcards.add(flashcard);
         lastCardID++;
+        return flashcard;
     }
 
     public void updateFlashcard(Flashcard flashcard) throws CustomException {
@@ -135,13 +145,26 @@ public class FlashcardController {
         }
     }
 
+    void saveAddedFlashcards(List<Flashcard> flashcardsToSave) throws CustomException {
+        try {
+            for (Flashcard flashcard : flashcardsToSave) {
+                if (addedFlashcards.contains(flashcard)) {
+                    flashcardDAOImpl.insert(flashcard);
+                }
+            }
+            addedFlashcards.removeAll(flashcardsToSave);
+        } catch (Exception e) {
+            throw new CustomException("Failed to Save Flashcards");
+        }
+    }
+
     public boolean hasPendingChanges() {
         return !addedFlashcards.isEmpty() || !modifiedFlashcards.isEmpty() || !deletedFlashcards.isEmpty();
     }
 
     void validateConstraints(Flashcard flashcard) throws CustomException{
         //VALIDATE ID UNIQUENESS
-        if(flashcards.stream().anyMatch(i -> (i.getCardID() == flashcard.getCardID()) && (i != flashcard))) {
+        if(flashcards.stream().anyMatch(i -> (i.getCardID() == flashcard.getCardID() && i != flashcard))) {
             throw new CustomException("Flashcard ID already exists.");
         }
 

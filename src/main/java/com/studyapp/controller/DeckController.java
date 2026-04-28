@@ -28,12 +28,14 @@ public class DeckController {
         this.mc = mc;
     }
 
-    public void createDeck(String deckName, String description) throws CustomException{
+    public Deck createDeck(String deckName, String description) throws CustomException{
         Deck deck = new Deck(lastDeckID, deckName, description, LocalDateTime.now());
+
         validateConstraints(deck);
         decks.add(deck);
         addedDecks.add(deck);
         lastDeckID++;
+        return deck;
     }
 
     public void deleteDeck(int deckID) throws CustomException{
@@ -58,7 +60,7 @@ public class DeckController {
         }
         //DELETE ALL SESSIONS ASSOCIATED IN THIS DECK
         for(StudySession session: mc.getAllSessions()){
-            if(session.getDeck().getDeckID() == deckID){
+            if(session.getDeckID() == deckID){
                 mc.deleteSession(session.getSessionID());
             }
         }
@@ -127,15 +129,33 @@ public class DeckController {
         }
     }
 
+    public void saveAddedDecks(List<Deck> decksToSave) throws CustomException {
+        try {
+            for (Deck deck : decksToSave) {
+                if (addedDecks.contains(deck)) {
+                    deckDaoImpl.insert(deck);
+                }
+            }
+            addedDecks.removeAll(decksToSave);
+        } catch (Exception e) {
+            throw new CustomException("Failed to Save Decks");
+        }
+    }
+
     public boolean hasPendingChanges() {
         return !addedDecks.isEmpty() || !modifiedDecks.isEmpty() || !deletedDecks.isEmpty();
     }
 
     void validateConstraints(Deck deck) throws CustomException{
         //VALIDATE ID UNIQUENESS
-        if(decks.stream().anyMatch(i -> (i.getDeckID() == deck.getDeckID()) && (i != deck))){
+        if(decks.stream().anyMatch(i -> (i.getDeckID() == deck.getDeckID()) && i != deck)){
             throw new CustomException("Deck ID already exists.");
         }
+        //VALIDATE NAME UNIQUENESS
+        if(decks.stream().anyMatch(i -> (i.getName().equals(deck.getName()) && i != deck))){
+            throw new CustomException("Deck name already exists.");
+        }
+
         //VALIDATE NAME NOT NULL
         if(deck.getName() == null || deck.getName().trim().isEmpty()){
             throw new CustomException("Name cannot be empty.");
@@ -143,10 +163,6 @@ public class DeckController {
         //VALIDATE NAME < 100
         if(deck.getName().length() > 100){
             throw new CustomException("Name cannot exceed 100 characters.");
-        }
-        //VALIDATE NAME UNIQUENESS
-        if(decks.stream().anyMatch(i -> (i.getName().equals(deck.getName()) && (i != deck)))){
-            throw new CustomException("Deck name already exists.");
         }
         //VALIDATE DATE IF NOT NULL
         if(deck.getCreatedAt() == null){
