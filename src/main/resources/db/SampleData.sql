@@ -97,4 +97,3 @@ INSERT IGNORE INTO Card_Review (review_id, session_id, card_id, reviewed_at, is_
 
 UPDATE Study_Session SET ended_at = '2025-04-01 18:25:00' WHERE session_id = 1;
 UPDATE Study_Session SET ended_at = '2025-04-02 20:15:00' WHERE session_id = 2;
-UPDATE Study_Session SET ended_at = '2026-01-04 06:27:00' WHERE session_id = 3;
