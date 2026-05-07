@@ -1,5 +1,6 @@
 package com.studyapp.controller;
 
+import java.sql.Connection;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,6 +30,12 @@ public class FlashcardController {
         return new ArrayList<>(flashcards);
     }
 
+    public Flashcard getFlashcard(int flashcardID){
+        return flashcards.stream()
+                .filter(i -> i.getCardID() == flashcardID)
+                .findFirst().orElse(null);
+    }
+
     public List<Flashcard> getHardFlashcards(){
     return flashcards.stream()
             .filter(i -> i.getDifficulty() != null
@@ -52,7 +59,7 @@ public class FlashcardController {
 
     public List<Flashcard> getFlashcardsByDeck(int deckID){
         return flashcards.stream()
-                .filter(card -> card.getDeck().getDeckID() == deckID)
+                .filter(card -> card.getDeckID() == deckID)
                 .toList();
     }
 
@@ -65,16 +72,14 @@ public class FlashcardController {
             throw new CustomException("Deck does not exist.");
         }
 
-        Flashcard flashcard = new Flashcard(lastCardID, deck, question, answer, difficulty, LocalDateTime.now());
+        Flashcard flashcard = new Flashcard(lastCardID, deck.getDeckID(), question, answer, difficulty, LocalDateTime.now());
         validateConstraints(flashcard);
         flashcards.add(flashcard);
         addedFlashcards.add(flashcard);
         lastCardID++;
         return flashcard;
     }
-    //edited so that it throws exception if flashcard doesn't exist, 
-    // instead of returning null. 
-    //allows to edit flashcard, no design change, just added exception handling.
+
     public void updateFlashcard(Flashcard flashcard) throws CustomException {
         Flashcard existing = flashcards.stream()
                 .filter(i -> i.getCardID() == flashcard.getCardID())
@@ -83,17 +88,9 @@ public class FlashcardController {
             throw new CustomException("Flashcard not found.");
         }
 
-        // Remove first so validateConstraints doesn't see a duplicate ID.
+        validateConstraints(flashcard);
+
         flashcards.remove(existing);
-
-        try {
-            validateConstraints(flashcard);
-        } catch (CustomException e) {
-            // Rollback: put the original back if validation fails.
-            flashcards.add(existing);
-            throw e;
-        }
-
         flashcards.add(flashcard);
 
         if (addedFlashcards.contains(existing)) {
@@ -121,29 +118,19 @@ public class FlashcardController {
         }
     }
 
-    void loadFLashcard(){
+    void loadFLashcard() throws CustomException{
         try{
             flashcards = flashcardDAOImpl.getAllFlashcards();
             lastCardID = flashcardDAOImpl.getLastID() + 1;
         }catch(Exception e){
-            System.out.println("Failed to Load Flashcards");
+            throw new CustomException("Failed to load cards.");
         }
     }
 
     void saveFlashcardToDB() throws CustomException{
         try{
-            for(Flashcard flashcard: addedFlashcards){
-                flashcardDAOImpl.insert(flashcard);
-            }
-            for(Flashcard flashcard: modifiedFlashcards.values()){
-                flashcardDAOImpl.update(flashcard);
-            }
-            for(int flashcardID: deletedFlashcards){
-                flashcardDAOImpl.delete(flashcardID);
-            }
-            addedFlashcards.clear();
-            modifiedFlashcards.clear();
-            deletedFlashcards.clear();
+            persistPendingChanges(null);
+            markPendingChangesSaved();
         }catch(Exception e){
             throw new CustomException("Failed to Save Flashcards");
         }
@@ -166,9 +153,40 @@ public class FlashcardController {
         return !addedFlashcards.isEmpty() || !modifiedFlashcards.isEmpty() || !deletedFlashcards.isEmpty();
     }
 
+    public void persistPendingChanges(Connection conn) throws Exception {
+        if (conn == null) {
+            for (Flashcard flashcard : addedFlashcards) {
+                flashcardDAOImpl.insert(flashcard);
+            }
+            for (Flashcard flashcard : modifiedFlashcards.values()) {
+                flashcardDAOImpl.update(flashcard);
+            }
+            for (int flashcardID : deletedFlashcards) {
+                flashcardDAOImpl.delete(flashcardID);
+            }
+            return;
+        }
+
+        for (Flashcard flashcard : addedFlashcards) {
+            flashcardDAOImpl.insert(conn, flashcard);
+        }
+        for (Flashcard flashcard : modifiedFlashcards.values()) {
+            flashcardDAOImpl.update(conn, flashcard);
+        }
+        for (int flashcardID : deletedFlashcards) {
+            flashcardDAOImpl.delete(conn, flashcardID);
+        }
+    }
+
+    public void markPendingChangesSaved() {
+        addedFlashcards.clear();
+        modifiedFlashcards.clear();
+        deletedFlashcards.clear();
+    }
+
     void validateConstraints(Flashcard flashcard) throws CustomException{
         //VALIDATE ID UNIQUENESS
-        if(flashcards.stream().anyMatch(i -> (i.getCardID() == flashcard.getCardID()) && (i != flashcard))) {
+        if(flashcards.stream().anyMatch(i -> (i.getCardID() == flashcard.getCardID() && i != flashcard))) {
             throw new CustomException("Flashcard ID already exists.");
         }
 

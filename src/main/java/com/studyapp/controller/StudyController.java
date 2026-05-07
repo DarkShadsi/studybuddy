@@ -5,6 +5,7 @@ import com.studyapp.model.CardReview;
 import com.studyapp.model.Deck;
 import com.studyapp.model.StudySession;
 
+import java.sql.Connection;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -32,7 +33,7 @@ public class StudyController {
             throw new CustomException("Deck does not exist.");
         }
 
-        StudySession studySession = new StudySession(lastSessionID, deck, startedAt, null);
+        StudySession studySession = new StudySession(lastSessionID, deck.getDeckID(), startedAt, null);
 
         validateConstraints(studySession);
         studySessions.add(studySession);
@@ -74,13 +75,12 @@ public class StudyController {
         return studySessions.stream()
                 .filter(i -> i.getEndedAt() != null)
                 .sorted(Comparator.comparing(StudySession::getEndedAt).reversed())
-                .limit(3)
                 .collect(Collectors.toList());
     }
 
     public List<StudySession> getSpecificDeckSession(int deckID){
         return studySessions.stream()
-                .filter(i -> i.getDeck().getDeckID() == deckID)
+                .filter(i -> i.getDeckID() == deckID)
                 .toList();
     }
 
@@ -93,7 +93,7 @@ public class StudyController {
         }
 
         for(CardReview review: mc.getAllCardReviews()){
-            if(review.getStudySession().getSessionID() == sessionID){
+            if(review.getStudySessionID() == sessionID){
                 mc.deleteCardReview(review.getReviewID());
             }
         }
@@ -129,20 +129,18 @@ public class StudyController {
         }
     }
 
-    void saveStudySessionToDB() throws CustomException{
+    void saveNewStudySessionsToDB() throws CustomException {
         try{
-            for(StudySession session: addedStudySessions){
-                studySessionDAOImpl.insert(session);
-            }
-            for(StudySession session: modifiedStudySessions.values()){
-                studySessionDAOImpl.updateEnd(session.getSessionID(), session.getEndedAt());
-            }
-            for(int sessionID: deletedStudySessions){
-                studySessionDAOImpl.delete(sessionID);
-            }
-            addedStudySessions.clear();
-            modifiedStudySessions.clear();
-            deletedStudySessions.clear();
+            persistNewStudySessions(null);
+        }catch(Exception e){
+            throw new CustomException("Failed to Save Study Sessions");
+        }
+    }
+
+    void finalizeStudySessionsToDB() throws CustomException {
+        try {
+            finalizeStudySessions(null);
+            markPendingChangesSaved();
         }catch(Exception e){
             throw new CustomException("Failed to Save Study Sessions");
         }
@@ -152,5 +150,53 @@ public class StudyController {
         return !addedStudySessions.isEmpty()
                 || !modifiedStudySessions.isEmpty()
                 || !deletedStudySessions.isEmpty();
+    }
+
+    public void persistNewStudySessions(Connection conn) throws Exception {
+        for (StudySession session : addedStudySessions) {
+            StudySession openSession = new StudySession(
+                    session.getSessionID(),
+                    session.getDeckID(),
+                    session.getStartedAt(),
+                    null
+            );
+            if (conn == null) {
+                studySessionDAOImpl.insert(openSession);
+            } else {
+                studySessionDAOImpl.insert(conn, openSession);
+            }
+        }
+    }
+
+    public void finalizeStudySessions(Connection conn) throws Exception {
+        for (StudySession session : addedStudySessions) {
+            if (session.getEndedAt() != null) {
+                if (conn == null) {
+                    studySessionDAOImpl.updateEnd(session.getSessionID(), session.getEndedAt());
+                } else {
+                    studySessionDAOImpl.updateEnd(conn, session.getSessionID(), session.getEndedAt());
+                }
+            }
+        }
+        for (StudySession session : modifiedStudySessions.values()) {
+            if (conn == null) {
+                studySessionDAOImpl.updateEnd(session.getSessionID(), session.getEndedAt());
+            } else {
+                studySessionDAOImpl.updateEnd(conn, session.getSessionID(), session.getEndedAt());
+            }
+        }
+        for (int sessionID : deletedStudySessions) {
+            if (conn == null) {
+                studySessionDAOImpl.delete(sessionID);
+            } else {
+                studySessionDAOImpl.delete(conn, sessionID);
+            }
+        }
+    }
+
+    public void markPendingChangesSaved() {
+        addedStudySessions.clear();
+        modifiedStudySessions.clear();
+        deletedStudySessions.clear();
     }
 }
