@@ -46,9 +46,9 @@ public class MainFrame {
         sidebar.setStyle("-fx-background-color: transparent;");
 
         Label appTitleLabel = new Label("Study Assistant\nApplication");
-        appTitleLabel.setFont(Font.font("Serif", 18));
+        appTitleLabel.setFont(Font.font("Serif", 24));
         appTitleLabel.setTextFill(Color.web(PRIMARY_BLUE));
-        VBox.setMargin(appTitleLabel, new Insets(0, 0, 10, 0));
+        VBox.setMargin(appTitleLabel, new Insets(0, 0, 10, 12));
 
         VBox buttonBox = new VBox(15);
         buttonBox.setPadding(new Insets(20));
@@ -132,9 +132,9 @@ public class MainFrame {
         sidebar.setStyle("-fx-background-color: transparent;");
 
         Label appTitleLabel = new Label("Study Assistant\nApplication");
-        appTitleLabel.setFont(Font.font("Serif", 18));
+        appTitleLabel.setFont(Font.font("Serif", 24));
         appTitleLabel.setTextFill(Color.web(PRIMARY_BLUE));
-        VBox.setMargin(appTitleLabel, new Insets(0, 0, 10, 0));
+        VBox.setMargin(appTitleLabel, new Insets(0, 0, 10, 12));
 
         VBox buttonBox = new VBox(15);
         buttonBox.setPadding(new Insets(20));
