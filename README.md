@@ -407,6 +407,6 @@ study-assistant/
     └── resources/
         ├── db.properties
         └── db/
-            ├── db_init.sql               # Schema creation script
+            ├── StudyAssistantSchema.sql               # Schema creation script
             └── SampleData.sql           # Optional sample data
 ```
