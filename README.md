@@ -66,31 +66,21 @@ Study Assistant is a JavaFX desktop application for creating and managing flashc
 
 1. **Clone or download** the project folder.
 
-2. **Create the database schema.**
-   Connect to your MySQL server and run the setup script:
+2. **Ensure your MySQL server** is running and accepting connections on `localhost`.
 
-   ```sql
-   SOURCE src/main/resources/db/TestDB.sql;
+3. **(Optional) Build the project:**
+
+   ```powershell
+   mvn clean install
    ```
 
-   This creates the `study_assistant` database and all required tables (`Deck`, `Card`, `Study_Session`, `Card_Review`).
-
-3. **(Optional) Load sample data.**
-   To pre-populate the database with example decks and cards:
-
-   ```sql
-   SOURCE src/main/resources/db/SampleData.sql;
-   ```
-
-4. **Verify your MySQL server** is running and accepting connections on `localhost`.
-
-5. **Run the application:**
+4. **Run the application:**
 
    ```powershell
    mvn javafx:run
    ```
 
-   On the first launch, a login screen will appear. Enter your MySQL username and password. Credentials are saved securely via the Java Preferences API and used for auto-login on future launches.
+   On the first launch, a login screen will appear. Enter your MySQL username and password. The app will automatically create the database, tables, and sample data. Credentials are saved securely via the Java Preferences API and used for auto-login on future launches.
 
 ---
 
