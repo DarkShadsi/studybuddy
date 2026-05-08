@@ -1,6 +1,5 @@
 package com.studyapp.view;
 
-import java.util.Optional;
 import java.util.function.Consumer;
 
 import com.studyapp.controller.MainController;

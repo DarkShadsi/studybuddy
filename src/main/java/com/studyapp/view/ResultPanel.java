@@ -7,7 +7,6 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
-import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -20,10 +19,7 @@ import javafx.scene.text.FontWeight;
 public class ResultPanel {
 
     public static VBox build(StudyPanel sp, String result, Flashcard card, String answer, Deck deck) {
-        // ___________________________________________________________
-        // ADDED: Get correct answer for typo display logic
         String correctAnswer = card.getAnswer();
-        // ___________________________________________________________
         VBox wrapper = new VBox();
         wrapper.setPadding(new Insets(20));
         wrapper.setStyle("-fx-background-color: transparent;");
@@ -74,8 +70,6 @@ public class ResultPanel {
                         " -fx-focus-color: transparent;"
         );
 
-        // ___________________________________________________________
-        // ADDED: Show correct answer if CORRECT with typo (not 100% match)
         boolean isCorrectWithTypo = result.equals("CORRECT") && !answer.equals(correctAnswer);
         Label correctAnswerLabel = null;
         if (isCorrectWithTypo) {
@@ -86,18 +80,14 @@ public class ResultPanel {
             correctAnswerLabel.setMaxWidth(550);
             correctAnswerLabel.setStyle("-fx-font-style: italic;");
         }
-        // ___________________________________________________________
 
         VBox answerSection = new VBox(8);
         answerSection.setAlignment(Pos.CENTER);
-        // ___________________________________________________________
-        // ADDED: Add correct answer label if typo was forgiven
         if (isCorrectWithTypo) {
             answerSection.getChildren().addAll(prompt, answerInput, correctAnswerLabel);
         } else {
             answerSection.getChildren().addAll(prompt, answerInput);
         }
-        // ___________________________________________________________
 
         // ── result label — no correct answer revealed if wrong ────────────────
         Label resultLabel = new Label(result);
