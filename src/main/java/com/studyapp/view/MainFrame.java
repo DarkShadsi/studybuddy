@@ -1,6 +1,5 @@
 package com.studyapp.view;
 
-import java.util.Optional;
 import java.util.function.Consumer;
 
 import com.studyapp.controller.MainController;
@@ -110,13 +109,19 @@ public class MainFrame {
         stage.setMaximized(true);
     }
 
-    public static void showPrebuilt(Stage stage, BorderPane mainLayout) {
+    public static void showPrebuilt(Stage stage, BorderPane mainLayout, MainController mc) {
         Scene existing = stage.getScene();
         if (existing == null) {
             stage.setScene(new Scene(mainLayout, 1024, 768));
         } else {
             existing.setRoot(mainLayout);
         }
+        stage.setOnCloseRequest(event -> {
+            if (stage.getScene().getRoot() == mainLayout) {
+                event.consume();
+                handleExit(mainLayout, mc);
+            }
+        });
         stage.show();
         stage.setMaximized(true);
     }

@@ -106,7 +106,7 @@ public class CardDetailPanel {
         saveBtn.setMaxWidth(Double.MAX_VALUE);
         saveBtn.setFont(Font.font("Serif", 16));
         saveBtn.setVisible(false);
-        saveBtn.setManaged(false);   // takes no layout space when hidden
+        saveBtn.setManaged(false);
         saveBtn.setStyle(
                 "-fx-background-color: white; -fx-text-fill: #2d7a2d;"
                 + " -fx-border-color: #2d7a2d; -fx-border-radius: 5;"

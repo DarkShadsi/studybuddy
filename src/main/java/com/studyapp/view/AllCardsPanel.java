@@ -225,7 +225,6 @@ public class AllCardsPanel {
         cardsBox.getChildren().add(pagination);
     }
 
-    // ── Everything below is unchanged ────────────────────────────────────────
 
     private static void showCreateCardDialog(BorderPane mainLayout, Deck currentDeck, MainController mc) {
         Stage dialog = new Stage();

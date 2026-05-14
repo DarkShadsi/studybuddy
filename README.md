@@ -1,6 +1,6 @@
 # Study Assistant
 
-Study Assistant is a JavaFX desktop application for creating and managing flashcard decks, studying with type-in quizzes, and tracking session progress — all backed by a MySQL database.
+Study Assistant is a JavaFX desktop application for creating and managing flashcard decks, studying with type-in quizzes, and tracking session progress - all backed by a MySQL database.
 
 ---
 
@@ -33,7 +33,7 @@ Study Assistant is a JavaFX desktop application for creating and managing flashc
 - Flashcard management: create, edit, and delete cards with Easy / Medium / Hard difficulty levels
 - Type-in study mode with intelligent answer checking
 - Smart answer checker using Levenshtein distance, Jaro-Winkler similarity, cosine n-gram similarity, and WordNet synonym/antonym detection
-- Per-card result feedback: **CORRECT**, **ALMOST** (accepted typo), or **INCORRECT**, with the correct answer shown when a typo is detected
+- Per-card result feedback: **CORRECT**, **CLOSE**, or **INCORRECT**, with the correct answer shown when a typo is accepted as correct
 - Import and export decks as **JSON** or **CSV**
 - Paginated card and deck lists (5 items per page)
 
@@ -41,15 +41,15 @@ Study Assistant is a JavaFX desktop application for creating and managing flashc
 
 ## Tech Stack
 
-| Component        | Technology                          |
-|------------------|-------------------------------------|
-| Language         | Java 21                             |
-| UI Framework     | JavaFX 21.0.2                       |
-| Build Tool       | Maven                               |
-| Database         | MySQL                               |
-| JSON             | Gson 2.10.1                         |
-| String Matching  | Apache Commons Text 1.12.0          |
-| String Matching  | java-string-similarity 2.0.0        |
+| Component        | Technology                         |
+|------------------|------------------------------------|
+| Language         | Java 21                            |
+| UI Framework     | JavaFX 21.0.2                      |
+| Build Tool       | Maven                              |
+| Database         | MySQL                              |
+| JSON             | Gson 2.10.1                        |
+| String Matching  | Apache Commons Text 1.12.0         |
+| String Matching  | java-string-similarity 2.0.0       |
 | Semantic Matching| extjwnl 2.0.5 + extjwnl-data-wn31  |
 
 ---
@@ -80,7 +80,7 @@ Study Assistant is a JavaFX desktop application for creating and managing flashc
    mvn javafx:run
    ```
 
-   On the first launch, a login screen will appear. Enter your MySQL username and password. The app will automatically create the database, tables, and sample data. Credentials are saved securely via the Java Preferences API and used for auto-login on future launches.
+   On the first launch, a login screen will appear. Enter your MySQL username and password. The app will automatically create the database, tables, and sample data. Credentials are stored via the Java Preferences API and used for auto-login on future launches.
 
 ---
 
@@ -91,7 +91,7 @@ Study Assistant is a JavaFX desktop application for creating and managing flashc
 **First launch:**
 - A login card will appear asking for your MySQL **Username** and **Password**.
 - These are your MySQL server credentials (not a separate app account).
-- Click **Connect** to authenticate and load the application.
+- Click **Sign In** to authenticate and load the application.
 - If authentication fails, an error message is shown and you can retry.
 
 **Subsequent launches:**
@@ -126,11 +126,11 @@ Displays all your decks in a paginated list (5 per page). Each deck row shows it
 
 | Button   | Action                                                                                        |
 |----------|-----------------------------------------------------------------------------------------------|
-| New      | Opens a dialog to create a new deck (name required, description optional)                     |
-| Import   | Import one or more decks from a JSON or CSV file (see [Import & Export](#8-import--export))   |
-| Export   | Select a deck from a dropdown and export it to a JSON or CSV file                             |
-| Open     | Opens the [Deck Detail](#5-deck-detail) view for the selected deck                            |
-| ◀ / ▶   | Navigate between pages                                                                        |
+| New      | Opens a dialog to create a new deck (name required, description optional)                    |
+| Import   | Import one or more decks from a JSON or CSV file (see [Import & Export](#8-import--export)) |
+| Export   | Select a deck from a dropdown and export it to a JSON or CSV file                            |
+| Open     | Opens the [Deck Detail](#5-deck-detail) view for the selected deck                           |
+| Previous / Next | Navigate between pages                                                                |
 
 **Creating a deck:**
 1. Click **New**.
@@ -156,7 +156,7 @@ Displays all flashcards across every deck in a paginated list. Each card row sho
 |--------|--------------------------------------------------------------------|
 | New    | Opens a dialog to create a new flashcard (must select a deck)      |
 | Open   | Opens the [Card Detail](#6-card-detail) view for the selected card |
-| ◀ / ▶ | Navigate between pages                                             |
+| Previous / Next | Navigate between pages                                      |
 
 **Creating a flashcard:**
 1. Click **New**.
@@ -218,14 +218,14 @@ Started from the **Deck Detail** view using the **Study** button. The deck must 
 3. Press **Submit** or use **Ctrl + Enter** to submit.
 4. The result screen shows your answer and one of three outcomes:
 
-| Result        | Meaning                                                                               |
-|---------------|---------------------------------------------------------------------------------------|
-| **CORRECT**   | Answer matches the expected answer (exact, synonym, or within acceptable similarity)  |
-| **ALMOST**    | Answer was accepted as correct but contains a typo — the correct spelling is shown    |
-| **INCORRECT** | Answer did not meet the similarity threshold; correct answer is displayed             |
+| Result        | Meaning                                                                              |
+|---------------|--------------------------------------------------------------------------------------|
+| **CORRECT**   | Answer matches the expected answer (exact, synonym, or within acceptable similarity) |
+| **CLOSE**     | Answer was similar but did not meet the accepted-correct threshold                   |
+| **INCORRECT** | Answer did not meet the similarity threshold                                         |
 
 5. Click **Next** to proceed to the next card, or **Retry** to attempt the same card again.
-6. When all cards are done, a **Session Summary** dialog shows total correct answers, total attempts, and a percentage score.
+6. When all cards are done, a **Session Complete** dialog shows the final score.
 7. The live sidebar during study tracks **Correct**, **Attempts**, and a **progress arc**.
 
 **Answer Checker Logic:**
@@ -246,14 +246,14 @@ Accessed via the **Import** and **Export** buttons in My Decks.
 
 **Import:**
 1. Click **Import** and choose a format: **JSON** or **CSV**.
-2. A file chooser opens — select your file.
+2. A file chooser opens - select your file.
 3. The app reads the file, creates any new decks and cards found, and reports how many decks were imported.
 4. Decks with a name that already exists in the app are **skipped**.
 
 **Export:**
 1. Click **Export** and choose a format: **JSON** or **CSV**.
 2. Select the deck to export from the dropdown.
-3. A save dialog opens — choose a destination.
+3. A save dialog opens - choose a destination.
 4. The file is written with all cards belonging to that deck.
 
 ---
@@ -350,63 +350,66 @@ Second Deck,Another deck,What is the capital of France?,Paris,Hard
 
 ## Project Structure
 
-```
-study-assistant/
-├── pom.xml
-├── README.md
-├── sample-data/
-│   ├── sample-deck.json
-│   └── sample-data2.json
-└── src/main/
-    ├── java/com/studyapp/
-    │   ├── Main.java
-    │   ├── controller/
-    │   │   ├── MainController.java       # Central controller; coordinates all operations
-    │   │   ├── DeckController.java
-    │   │   ├── FlashcardController.java
-    │   │   ├── StudyController.java
-    │   │   ├── ReviewController.java
-    │   │   ├── AnswerChecker.java        # Smart answer evaluation logic
-    │   │   ├── CredentialHandler.java    # Saves/loads MySQL credentials
-    │   │   ├── ProgressController.java
-    │   │   └── CustomException.java
-    │   ├── dao/
-    │   │   ├── DeckDAO.java
-    │   │   ├── FlashcardDAO.java
-    │   │   ├── StudySessionDAO.java
-    │   │   ├── CardReviewDAO.java
-    │   │   └── impl/                     # DAO implementations
-    │   ├── db/
-    │   │   └── DatabaseConnection.java
-    │   ├── model/
-    │   │   ├── Deck.java
-    │   │   ├── Flashcard.java
-    │   │   ├── StudySession.java
-    │   │   ├── CardReview.java
-    │   │   └── ObjectFactory.java
-    │   ├── service/
-    │   │   ├── JsonImportExportService.java
-    │   │   ├── CsvImportExportService.java
-    │   │   ├── SaveService.java
-    │   │   ├── DeckJson.java
-    │   │   └── CardJson.java
-    │   └── view/
-    │       ├── MainFrame.java            # Root layout + sidebar navigation
-    │       ├── SetupPanel.java           # Login screen
-    │       ├── SplashScreen.java
-    │       ├── DashboardPanel.java
-    │       ├── MyDeckPanel.java
-    │       ├── DeckDetailPanel.java
-    │       ├── AllCardsPanel.java
-    │       ├── CardDetailPanel.java
-    │       ├── StudyPanel.java
-    │       ├── QuestionPanel.java
-    │       ├── ResultPanel.java
-    │       ├── ProgressPanel.java
-    │       └── ExitPanel.java
-    └── resources/
-        ├── db.properties
-        └── db/
-            ├── TestDB.sql               # Schema creation script
-            └── SampleData.sql           # Optional sample data
+```text
+studybuddy/
+|-- pom.xml
+|-- README.md
+|-- sample-data/
+|   |-- sample-deck.json
+|   `-- sample-data2.json
+`-- src/main/
+    |-- java/com/studyapp/
+    |   |-- Launcher.java              # Executable JAR entry point; delegates to Main
+    |   |-- Main.java                  # JavaFX application bootstrap
+    |   |-- controller/
+    |   |   |-- AnswerChecker.java
+    |   |   |-- CredentialHandler.java
+    |   |   |-- CustomException.java
+    |   |   |-- DeckController.java
+    |   |   |-- FlashcardController.java
+    |   |   |-- MainController.java    # Central coordinator for UI, controllers, and services
+    |   |   |-- ReviewController.java
+    |   |   `-- StudyController.java
+    |   |-- dao/
+    |   |   |-- CardReviewDAO.java
+    |   |   |-- DeckDAO.java
+    |   |   |-- FlashcardDAO.java
+    |   |   |-- StudySessionDAO.java
+    |   |   `-- impl/
+    |   |       |-- CardReviewDAOImpl.java
+    |   |       |-- DeckDAOImpl.java
+    |   |       |-- FlashcardDAOImpl.java
+    |   |       `-- StudySessionDAOImpl.java
+    |   |-- db/
+    |   |   `-- DatabaseConnection.java
+    |   |-- model/
+    |   |   |-- CardReview.java
+    |   |   |-- Deck.java
+    |   |   |-- Flashcard.java
+    |   |   |-- ObjectFactory.java
+    |   |   `-- StudySession.java
+    |   |-- service/
+    |   |   |-- CardJson.java
+    |   |   |-- CsvImportExportService.java
+    |   |   |-- DeckJson.java
+    |   |   |-- JsonImportExportService.java
+    |   |   `-- SaveService.java
+    |   `-- view/
+    |       |-- AllCardsPanel.java
+    |       |-- CardDetailPanel.java
+    |       |-- CLIView.java
+    |       |-- DashboardPanel.java
+    |       |-- DeckDetailPanel.java
+    |       |-- ExitPanel.java
+    |       |-- MainFrame.java
+    |       |-- MyDeckPanel.java
+    |       |-- QuestionPanel.java
+    |       |-- ResultPanel.java
+    |       |-- SetupPanel.java
+    |       |-- SplashScreen.java
+    |       `-- StudyPanel.java
+    `-- resources/
+        `-- db/
+            |-- SampleData.sql
+            `-- StudyAssistantSchema.sql
 ```
