@@ -1,5 +1,7 @@
 package com.studyapp.view;
 
+import com.studyapp.util.UiScale;
+
 import java.util.List;
 
 import com.studyapp.controller.CustomException;
@@ -66,7 +68,7 @@ public class AllCardsPanel {
         VBox.setVgrow(mainContent, Priority.ALWAYS);
 
         Label header = new Label(deck == null ? "All Cards" : deck.getName());
-        header.setFont(Responsive.font("Serif", 64));
+        header.setFont(UiScale.font("Serif", 64));
         header.setTextFill(Color.WHITE);
         header.setMaxWidth(Double.MAX_VALUE);
         header.setAlignment(Pos.CENTER);
@@ -87,26 +89,26 @@ public class AllCardsPanel {
 
         TextField searchField = new TextField();
         searchField.setPromptText("Search cards");
-        searchField.setPrefWidth(Responsive.size(460));
-        searchField.setPrefHeight(Responsive.size(44));
+        searchField.setPrefWidth(UiScale.size(460));
+        searchField.setPrefHeight(UiScale.size(44));
         searchField.setStyle(TOOLBAR_INPUT_STYLE);
 
         Label searchIcon = new Label("Search");
-        searchIcon.setFont(Responsive.font("Serif", 20));
+        searchIcon.setFont(UiScale.font("Serif", 20));
         searchIcon.setTextFill(Color.web(PRIMARY_BLUE));
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         Label sortLabel = new Label("Sort by:");
-        sortLabel.setFont(Responsive.font("Serif", 20));
+        sortLabel.setFont(UiScale.font("Serif", 20));
 
         ComboBox<String> sortCombo = new ComboBox<>();
         sortCombo.getItems().addAll("Newest", "Oldest", "Question");
         sortCombo.setValue("Newest");
         sortCombo.setStyle(TOOLBAR_INPUT_STYLE);
-        sortCombo.setPrefWidth(Responsive.size(180));
-        sortCombo.setPrefHeight(Responsive.size(44));
+        sortCombo.setPrefWidth(UiScale.size(180));
+        sortCombo.setPrefHeight(UiScale.size(44));
 
         toolbar.getChildren().addAll(newBtn, searchField, searchIcon, spacer, sortLabel, sortCombo);
 
@@ -215,7 +217,7 @@ public class AllCardsPanel {
         prevBtn.setOnMouseExited(e  -> { if (!prevBtn.isDisabled()) prevBtn.setStyle(OPEN_BUTTON_STYLE); });
 
         Label pageLabel = new Label("Page " + (safePage + 1) + " of " + totalPages);
-        pageLabel.setFont(Responsive.font("Serif", 18));
+        pageLabel.setFont(UiScale.font("Serif", 18));
         pageLabel.setTextFill(Color.web(PRIMARY_BLUE));
 
         Button nextBtn = new Button("Next >");
@@ -381,7 +383,7 @@ public class AllCardsPanel {
 
     private static Button createToolbarButton(String text) {
         Button button = new Button(text);
-        button.setPrefHeight(Responsive.size(44));
+        button.setPrefHeight(UiScale.size(44));
         button.setStyle(TOOLBAR_BUTTON_STYLE);
         button.setOnMouseEntered(e -> button.setStyle(TOOLBAR_BUTTON_HOVER_STYLE));
         button.setOnMouseExited(e -> button.setStyle(TOOLBAR_BUTTON_STYLE));
@@ -392,23 +394,23 @@ public class AllCardsPanel {
                                    BorderPane mainLayout, MainController mc) {
         VBox card = new VBox();
         card.setAlignment(Pos.CENTER_LEFT);
-        card.setMinHeight(Responsive.size(124));
-        card.setPadding(Responsive.insets(22));
+        card.setMinHeight(UiScale.size(124));
+        card.setPadding(UiScale.insets(22));
         card.setSpacing(10);
         card.setStyle(DECK_ROW_STYLE);
 
         VBox textContainer = new VBox(8);
         Label question = new Label(flashcard.getQuestion());
-        question.setFont(Responsive.font("Serif", 24));
+        question.setFont(UiScale.font("Serif", 24));
         question.setTextFill(Color.BLACK);
         question.setWrapText(true);
 
         Label answer = new Label("Answer: " + flashcard.getAnswer());
-        answer.setFont(Responsive.font("Serif", 20));
+        answer.setFont(UiScale.font("Serif", 20));
         answer.setTextFill(Color.web("#475569"));
 
         Label difficulty = new Label("Difficulty: " + flashcard.getDifficulty().toUpperCase());
-        difficulty.setFont(Responsive.font("Serif", 18));
+        difficulty.setFont(UiScale.font("Serif", 18));
         difficulty.setTextFill(Color.web(PRIMARY_BLUE));
 
         textContainer.getChildren().addAll(question, answer, difficulty);
@@ -417,8 +419,8 @@ public class AllCardsPanel {
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         Button selectBtn = new Button("OPEN");
-        selectBtn.setPrefWidth(Responsive.size(120));
-        selectBtn.setPrefHeight(Responsive.size(48));
+        selectBtn.setPrefWidth(UiScale.size(120));
+        selectBtn.setPrefHeight(UiScale.size(48));
         selectBtn.setStyle(OPEN_BUTTON_STYLE);
         selectBtn.setOnMouseEntered(e -> selectBtn.setStyle(OPEN_BUTTON_HOVER_STYLE));
         selectBtn.setOnMouseExited(e  -> selectBtn.setStyle(OPEN_BUTTON_STYLE));

@@ -1,5 +1,7 @@
 package com.studyapp.view;
 
+import com.studyapp.util.UiScale;
+
 import com.studyapp.controller.CustomException;
 import com.studyapp.controller.MainController;
 import com.studyapp.model.Deck;
@@ -280,21 +282,21 @@ public class StudyPanel {
     // ── sidebar (built once, never replaced) ──────────────────────────────────
     private VBox buildSidebar() {
         VBox sidebar = new VBox(18);
-        sidebar.setPadding(Responsive.insets(20, 24, 20, 24));
-        sidebar.setPrefWidth(Responsive.size(290));
-        sidebar.setMinWidth(Responsive.size(290));
-        sidebar.setMaxWidth(Responsive.size(290));
+        sidebar.setPadding(UiScale.insets(20, 24, 20, 24));
+        sidebar.setPrefWidth(UiScale.size(290));
+        sidebar.setMinWidth(UiScale.size(290));
+        sidebar.setMaxWidth(UiScale.size(290));
         sidebar.setStyle("-fx-background-color: transparent;");
 
         Label title = new Label("Study Assistant\nApplication");
-        title.setFont(Responsive.font("Serif", 38));
+        title.setFont(UiScale.font("Serif", 38));
         title.setWrapText(true);
-        title.setMaxWidth(Responsive.size(242));
+        title.setMaxWidth(UiScale.size(242));
         title.setTextFill(Color.web(PRIMARY_BLUE));
         VBox.setMargin(title, new Insets(0, 0, 10, 0));
 
         VBox buttonBox = new VBox(18);
-        buttonBox.setPadding(Responsive.insets(24));
+        buttonBox.setPadding(UiScale.insets(24));
         buttonBox.setStyle(BORDER_STYLE);
         VBox.setVgrow(buttonBox, Priority.ALWAYS);
 
@@ -317,7 +319,7 @@ public class StudyPanel {
         progressArc.setStrokeLineCap(StrokeLineCap.ROUND);
 
         pctLabel = new Label("0%");
-        pctLabel.setFont(Responsive.font("Serif", FontWeight.BOLD, 34));
+        pctLabel.setFont(UiScale.font("Serif", FontWeight.BOLD, 34));
         pctLabel.setTextFill(Color.web(PRIMARY_BLUE));
         pctLabel.setTranslateY(8);
 
@@ -329,8 +331,8 @@ public class StudyPanel {
         stats.setAlignment(Pos.CENTER_LEFT);
         correctLbl  = new Label("Correct: 0");
         attemptsLbl = new Label("Attempts: 0");
-        correctLbl.setFont(Responsive.font("Serif", FontWeight.BOLD, 24));
-        attemptsLbl.setFont(Responsive.font("Serif", FontWeight.BOLD, 24));
+        correctLbl.setFont(UiScale.font("Serif", FontWeight.BOLD, 24));
+        attemptsLbl.setFont(UiScale.font("Serif", FontWeight.BOLD, 24));
         correctLbl.setTextFill(Color.web(PRIMARY_BLUE));
         attemptsLbl.setTextFill(Color.web(PRIMARY_BLUE));
         stats.getChildren().addAll(correctLbl, attemptsLbl);
@@ -341,8 +343,8 @@ public class StudyPanel {
         // ── leave button ──
         Button leaveBtn = new Button("LEAVE");
         leaveBtn.setMaxWidth(Double.MAX_VALUE);
-        leaveBtn.setPrefHeight(Responsive.size(56));
-        leaveBtn.setFont(Responsive.font("Serif", 20));
+        leaveBtn.setPrefHeight(UiScale.size(56));
+        leaveBtn.setFont(UiScale.font("Serif", 20));
         String leaveDefault = "-fx-background-color: #ff9999; -fx-text-fill: black; -fx-border-color: "
                 + PRIMARY_BLUE + "; -fx-border-radius: 7; -fx-background-radius: 7;"
                 + " -fx-padding: 14 18; -fx-cursor: hand;";

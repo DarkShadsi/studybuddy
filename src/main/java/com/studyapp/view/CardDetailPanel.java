@@ -1,5 +1,7 @@
 package com.studyapp.view;
 
+import com.studyapp.util.UiScale;
+
 import java.time.format.DateTimeFormatter;
 
 import com.studyapp.controller.CustomException;
@@ -60,21 +62,21 @@ public class CardDetailPanel {
             Runnable onNavigateBack) {
 
         VBox sidebar = new VBox(18);
-        sidebar.setPadding(Responsive.insets(20, 24, 20, 24));
-        sidebar.setPrefWidth(Responsive.size(290));
-        sidebar.setMinWidth(Responsive.size(290));
-        sidebar.setMaxWidth(Responsive.size(290));
+        sidebar.setPadding(UiScale.insets(20, 24, 20, 24));
+        sidebar.setPrefWidth(UiScale.size(290));
+        sidebar.setMinWidth(UiScale.size(290));
+        sidebar.setMaxWidth(UiScale.size(290));
         sidebar.setStyle("-fx-background-color: transparent;");
 
         Label title = new Label("Study Assistant\nApplication");
-        title.setFont(Responsive.font("Serif", 38));
+        title.setFont(UiScale.font("Serif", 38));
         title.setWrapText(true);
-        title.setMaxWidth(Responsive.size(242));
+        title.setMaxWidth(UiScale.size(242));
         title.setTextFill(Color.web(PRIMARY_BLUE));
         VBox.setMargin(title, new Insets(0, 0, 10, 0));
 
         VBox buttonBox = new VBox(18);
-        buttonBox.setPadding(Responsive.insets(24));
+        buttonBox.setPadding(UiScale.insets(24));
         buttonBox.setStyle(BORDER_STYLE);
         VBox.setVgrow(buttonBox, Priority.ALWAYS);
 
@@ -91,15 +93,15 @@ public class CardDetailPanel {
 
         Button editBtn = new Button("Edit");
         editBtn.setMaxWidth(Double.MAX_VALUE);
-        editBtn.setPrefHeight(Responsive.size(56));
-        editBtn.setFont(Responsive.font("Serif", 20));
+        editBtn.setPrefHeight(UiScale.size(56));
+        editBtn.setFont(UiScale.font("Serif", 20));
         editBtn.setStyle(editIdleStyle);
 
         // ── DELETE button ─────────────────────────────────────────────────────
         Button deleteBtn = new Button("DELETE");
         deleteBtn.setMaxWidth(Double.MAX_VALUE);
-        deleteBtn.setPrefHeight(Responsive.size(56));
-        deleteBtn.setFont(Responsive.font("Serif", 20));
+        deleteBtn.setPrefHeight(UiScale.size(56));
+        deleteBtn.setFont(UiScale.font("Serif", 20));
         deleteBtn.setVisible(false);
         deleteBtn.setManaged(false);
         deleteBtn.setStyle(
@@ -110,8 +112,8 @@ public class CardDetailPanel {
         // ── Save Changes button (hidden until edit mode is active) ────────────
         Button saveBtn = new Button("Save Changes");
         saveBtn.setMaxWidth(Double.MAX_VALUE);
-        saveBtn.setPrefHeight(Responsive.size(56));
-        saveBtn.setFont(Responsive.font("Serif", 20));
+        saveBtn.setPrefHeight(UiScale.size(56));
+        saveBtn.setFont(UiScale.font("Serif", 20));
         saveBtn.setVisible(false);
         saveBtn.setManaged(false);
         saveBtn.setStyle(
@@ -134,8 +136,8 @@ public class CardDetailPanel {
 
         Button backBtn = new Button("BACK");
         backBtn.setMaxWidth(Double.MAX_VALUE);
-        backBtn.setPrefHeight(Responsive.size(56));
-        backBtn.setFont(Responsive.font("Serif", 20));
+        backBtn.setPrefHeight(UiScale.size(56));
+        backBtn.setFont(UiScale.font("Serif", 20));
         backBtn.setStyle(backDefault);
         backBtn.setOnMouseEntered(ev -> backBtn.setStyle(backHover));
         backBtn.setOnMouseExited(ev  -> backBtn.setStyle(backDefault));

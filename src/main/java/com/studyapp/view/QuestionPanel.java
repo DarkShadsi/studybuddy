@@ -1,5 +1,7 @@
 package com.studyapp.view;
 
+import com.studyapp.util.UiScale;
+
 import com.studyapp.model.Deck;
 import com.studyapp.model.Flashcard;
 import javafx.geometry.Insets;
@@ -31,7 +33,7 @@ public class QuestionPanel {
 
         // ── header ────────────────────────────────────────────────────────────
         Label header = new Label(deck.getName());
-        header.setFont(Responsive.font("Serif", 52));
+        header.setFont(UiScale.font("Serif", 52));
         header.setTextFill(Color.WHITE);
         header.setMaxWidth(Double.MAX_VALUE);
         header.setAlignment(Pos.CENTER);
@@ -43,9 +45,9 @@ public class QuestionPanel {
 
         // ── question ──────────────────────────────────────────────────────────
         Label questionBox = new Label("Q: " + card.getQuestion());
-        questionBox.setFont(Responsive.font("Serif", 28));
+        questionBox.setFont(UiScale.font("Serif", 28));
         questionBox.setWrapText(true);
-        questionBox.setMinHeight(Responsive.size(150));
+        questionBox.setMinHeight(UiScale.size(150));
         questionBox.setAlignment(Pos.TOP_LEFT);
         questionBox.setMaxWidth(Double.MAX_VALUE);
         questionBox.setPadding(new Insets(18));
@@ -57,13 +59,13 @@ public class QuestionPanel {
 
         // ── answer input ──────────────────────────────────────────────────────
         Label prompt = new Label("Enter Answer:");
-        prompt.setFont(Responsive.font("Serif", 24));
+        prompt.setFont(UiScale.font("Serif", 24));
 
         TextArea answerInput = new TextArea();
         answerInput.setMaxWidth(Double.MAX_VALUE);
-        answerInput.setPrefHeight(Responsive.size(170));
+        answerInput.setPrefHeight(UiScale.size(170));
         answerInput.setWrapText(true);
-        answerInput.setFont(Responsive.font("Serif", 32));
+        answerInput.setFont(UiScale.font("Serif", 32));
         answerInput.setStyle(
                 "-fx-border-color: " + StudyPanel.PRIMARY_BLUE +
                         "; -fx-border-radius: 5; -fx-background-radius: 5;" +
@@ -93,19 +95,19 @@ public class QuestionPanel {
                 + "; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 12 18;");
 
         Label positionLabel = new Label("Card " + cardNumber + " of " + totalCards);
-        positionLabel.setFont(Responsive.font("Serif", 22));
+        positionLabel.setFont(UiScale.font("Serif", 22));
         positionLabel.setTextFill(Color.web(StudyPanel.PRIMARY_BLUE));
 
         Label difficultyLabel = new Label("Difficulty: " + card.getDifficulty());
-        difficultyLabel.setFont(Responsive.font("Serif", 22));
+        difficultyLabel.setFont(UiScale.font("Serif", 22));
         difficultyLabel.setTextFill(Color.web(StudyPanel.PRIMARY_BLUE));
 
         cardInfo.getChildren().addAll(positionLabel, difficultyLabel);
 
         // ── submit button ─────────────────────────────────────────────────────
         Button submitBtn = new Button("SUBMIT");
-        submitBtn.setPrefWidth(Responsive.size(190));
-        submitBtn.setPrefHeight(Responsive.size(56));
+        submitBtn.setPrefWidth(UiScale.size(190));
+        submitBtn.setPrefHeight(UiScale.size(56));
         String submitDefault = "-fx-background-color: #e6eaf5; -fx-border-color: "
                 + StudyPanel.PRIMARY_BLUE + "; -fx-border-radius: 8;"
                 + " -fx-cursor: hand; -fx-font-size: 20px; -fx-font-weight: bold;";

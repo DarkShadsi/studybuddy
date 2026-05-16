@@ -1,5 +1,7 @@
 package com.studyapp.view;
 
+import com.studyapp.util.UiScale;
+
 import java.io.File;
 import java.util.List;
 
@@ -73,7 +75,7 @@ public class MyDeckPanel {
         VBox.setVgrow(mainContent, Priority.ALWAYS);
 
         Label header = new Label("My Decks");
-        header.setFont(Responsive.font("Serif", 64));
+        header.setFont(UiScale.font("Serif", 64));
         header.setTextFill(Color.WHITE);
         header.setMaxWidth(Double.MAX_VALUE);
         header.setAlignment(Pos.CENTER);
@@ -156,26 +158,26 @@ public class MyDeckPanel {
 
         TextField searchField = new TextField();
         searchField.setPromptText("Search decks");
-        searchField.setPrefWidth(Responsive.size(340));
-        searchField.setPrefHeight(Responsive.size(44));
+        searchField.setPrefWidth(UiScale.size(340));
+        searchField.setPrefHeight(UiScale.size(44));
         searchField.setStyle(TOOLBAR_INPUT_STYLE);
 
         Label searchIcon = new Label("Search");
-        searchIcon.setFont(Responsive.font("Serif", 20));
+        searchIcon.setFont(UiScale.font("Serif", 20));
         searchIcon.setTextFill(Color.web(PRIMARY_BLUE));
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         Label sortLabel = new Label("Sort by:");
-        sortLabel.setFont(Responsive.font("Serif", 20));
+        sortLabel.setFont(UiScale.font("Serif", 20));
 
         ComboBox<String> sortCombo = new ComboBox<>();
         sortCombo.getItems().addAll("Newest", "Oldest", "Name");
         sortCombo.setValue("Newest");
         sortCombo.setStyle(TOOLBAR_INPUT_STYLE);
-        sortCombo.setPrefWidth(Responsive.size(180));
-        sortCombo.setPrefHeight(Responsive.size(44));
+        sortCombo.setPrefWidth(UiScale.size(180));
+        sortCombo.setPrefHeight(UiScale.size(44));
 
         toolbar.getChildren().addAll(newBtn, importBtn, exportBtn, searchField, searchIcon, spacer, sortLabel, sortCombo);
 
@@ -285,7 +287,7 @@ public class MyDeckPanel {
         prevBtn.setOnMouseExited(e  -> { if (!prevBtn.isDisabled()) prevBtn.setStyle(OPEN_BUTTON_STYLE); });
 
         Label pageLabel = new Label("Page " + (safePage + 1) + " of " + totalPages);
-        pageLabel.setFont(Responsive.font("Serif", 18));
+        pageLabel.setFont(UiScale.font("Serif", 18));
         pageLabel.setTextFill(Color.web(PRIMARY_BLUE));
 
         Button nextBtn = new Button("Next >");
@@ -308,7 +310,7 @@ public class MyDeckPanel {
 
     private static Button createToolbarButton(String text) {
         Button button = new Button(text);
-        button.setPrefHeight(Responsive.size(44));
+        button.setPrefHeight(UiScale.size(44));
         button.setStyle(TOOLBAR_BUTTON_STYLE);
         button.setOnMouseEntered(e -> button.setStyle(TOOLBAR_BUTTON_HOVER_STYLE));
         button.setOnMouseExited(e -> button.setStyle(TOOLBAR_BUTTON_STYLE));
@@ -319,32 +321,32 @@ public class MyDeckPanel {
         HBox row = new HBox(24);
         row.setStyle(DECK_ROW_STYLE);
         row.setAlignment(Pos.CENTER_LEFT);
-        row.setMinHeight(Responsive.size(124));
+        row.setMinHeight(UiScale.size(124));
         row.setOnMouseEntered(e -> row.setStyle(DECK_ROW_HOVER_STYLE));
         row.setOnMouseExited(e -> row.setStyle(DECK_ROW_STYLE));
 
         VBox leftInfo = new VBox(8);
-        leftInfo.setPrefWidth(Responsive.size(330));
+        leftInfo.setPrefWidth(UiScale.size(330));
         Label idLbl = new Label("ID: " + deck.getDeckID());
-        idLbl.setFont(Responsive.font("Serif", 18));
+        idLbl.setFont(UiScale.font("Serif", 18));
         Label titleLbl = new Label(deck.getName());
-        titleLbl.setFont(Responsive.font("Serif", 24));
+        titleLbl.setFont(UiScale.font("Serif", 24));
         titleLbl.setWrapText(true);
         leftInfo.getChildren().addAll(idLbl, titleLbl);
 
         VBox middleInfo = new VBox(8);
         Label cardsLbl = new Label("Cards: " + mc.getFlashcardsByDeck(deck.getDeckID()).size());
-        cardsLbl.setFont(Responsive.font("Serif", 20));
+        cardsLbl.setFont(UiScale.font("Serif", 20));
         Label progLbl = new Label(String.format("Progress: %d%%", mc.getDeckProgress(deck.getDeckID())));
-        progLbl.setFont(Responsive.font("Serif", 20));
+        progLbl.setFont(UiScale.font("Serif", 20));
         middleInfo.getChildren().addAll(cardsLbl, progLbl);
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         Button selectBtn = new Button("OPEN");
-        selectBtn.setPrefWidth(Responsive.size(120));
-        selectBtn.setPrefHeight(Responsive.size(48));
+        selectBtn.setPrefWidth(UiScale.size(120));
+        selectBtn.setPrefHeight(UiScale.size(48));
         selectBtn.setStyle(OPEN_BUTTON_STYLE);
         selectBtn.setOnMouseEntered(e -> selectBtn.setStyle(OPEN_BUTTON_HOVER_STYLE));
         selectBtn.setOnMouseExited(e -> selectBtn.setStyle(OPEN_BUTTON_STYLE));

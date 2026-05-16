@@ -1,5 +1,7 @@
 package com.studyapp.view;
 
+import com.studyapp.util.UiScale;
+
 import com.studyapp.model.Deck;
 import com.studyapp.model.Flashcard;
 import javafx.geometry.Insets;
@@ -32,7 +34,7 @@ public class ResultPanel {
         VBox.setVgrow(resultArea, Priority.ALWAYS);
 
         Label header = new Label(deck.getName());
-        header.setFont(Responsive.font("Serif", 52));
+        header.setFont(UiScale.font("Serif", 52));
         header.setTextFill(Color.WHITE);
         header.setMaxWidth(Double.MAX_VALUE);
         header.setAlignment(Pos.CENTER);
@@ -42,9 +44,9 @@ public class ResultPanel {
         );
 
         Label questionBox = new Label("Q: " + card.getQuestion());
-        questionBox.setFont(Responsive.font("Serif", 24));
+        questionBox.setFont(UiScale.font("Serif", 24));
         questionBox.setWrapText(true);
-        questionBox.setMinHeight(Responsive.size(130));
+        questionBox.setMinHeight(UiScale.size(130));
         questionBox.setAlignment(Pos.TOP_LEFT);
         questionBox.setMaxWidth(Double.MAX_VALUE);
         questionBox.setPadding(new Insets(14));
@@ -54,14 +56,14 @@ public class ResultPanel {
         );
 
         Label prompt = new Label("Your Answer:");
-        prompt.setFont(Responsive.font("Serif", 22));
+        prompt.setFont(UiScale.font("Serif", 22));
 
         TextArea answerInput = new TextArea(answer == null ? "" : answer);
         answerInput.setEditable(false);
-        answerInput.setMaxWidth(Responsive.size(860));
-        answerInput.setPrefHeight(Responsive.size(125));
+        answerInput.setMaxWidth(UiScale.size(860));
+        answerInput.setPrefHeight(UiScale.size(125));
         answerInput.setWrapText(true);
-        answerInput.setFont(Responsive.font("Serif", 32));
+        answerInput.setFont(UiScale.font("Serif", 32));
         answerInput.setStyle(
                 "-fx-border-color: " + StudyPanel.PRIMARY_BLUE +
                         "; -fx-border-radius: 5; -fx-background-radius: 5;" +
@@ -71,7 +73,7 @@ public class ResultPanel {
 
         VBox answerSection = new VBox(10);
         answerSection.setAlignment(Pos.CENTER);
-        answerSection.setMaxWidth(Responsive.size(920));
+        answerSection.setMaxWidth(UiScale.size(920));
         answerSection.setStyle("-fx-background-color: #f8fbff; -fx-border-color: " + StudyPanel.PRIMARY_BLUE
                 + "; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 12 18;");
         answerSection.getChildren().addAll(prompt, answerInput);
@@ -81,18 +83,18 @@ public class ResultPanel {
                 && answer.trim().equalsIgnoreCase(correctAnswer.trim());
 
         Label feedbackLabel = new Label(feedbackMessage(result, exactMatch));
-        feedbackLabel.setFont(Responsive.font("Serif", 22));
+        feedbackLabel.setFont(UiScale.font("Serif", 22));
         feedbackLabel.setTextFill(Color.web("#334155"));
         feedbackLabel.setWrapText(true);
-        feedbackLabel.setMaxWidth(Responsive.size(860));
+        feedbackLabel.setMaxWidth(UiScale.size(860));
         answerSection.getChildren().add(feedbackLabel);
 
         if (!exactMatch) {
             Label expectedAnswerLabel = new Label("Expected answer: " + correctAnswer);
-            expectedAnswerLabel.setFont(Responsive.font("Serif", 22));
+            expectedAnswerLabel.setFont(UiScale.font("Serif", 22));
             expectedAnswerLabel.setTextFill(Color.web("#2a548f"));
             expectedAnswerLabel.setWrapText(true);
-            expectedAnswerLabel.setMaxWidth(Responsive.size(860));
+            expectedAnswerLabel.setMaxWidth(UiScale.size(860));
             expectedAnswerLabel.setStyle("-fx-font-weight: bold;");
             answerSection.getChildren().add(expectedAnswerLabel);
         }
@@ -101,7 +103,7 @@ public class ResultPanel {
         VBox.setVgrow(bottomSpacer, Priority.ALWAYS);
 
         Label resultLabel = new Label(result);
-        resultLabel.setFont(Responsive.font("Serif", FontWeight.BOLD, 52));
+        resultLabel.setFont(UiScale.font("Serif", FontWeight.BOLD, 52));
         Paint textColor = Color.web("#2e7d32");
         if (result.equals("INCORRECT")) {
             textColor = Color.web("#c62828");
@@ -122,8 +124,8 @@ public class ResultPanel {
                 + " -fx-cursor: hand; -fx-font-size: 18px;";
 
         for (Button button : new Button[]{prevBtn, retryBtn, nextBtn}) {
-            button.setPrefWidth(Responsive.size(175));
-            button.setPrefHeight(Responsive.size(52));
+            button.setPrefWidth(UiScale.size(175));
+            button.setPrefHeight(UiScale.size(52));
             button.setStyle(navDefault);
             button.setOnMouseEntered(e -> button.setStyle(navHover));
             button.setOnMouseExited(e -> button.setStyle(navDefault));

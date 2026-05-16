@@ -1,5 +1,7 @@
 package com.studyapp.view;
 
+import com.studyapp.util.UiScale;
+
 import java.util.List;
 
 import com.studyapp.controller.MainController;
@@ -65,13 +67,13 @@ public class DashboardPanel {
         HBox.setHgrow(recentDecks, Priority.ALWAYS);
 
         Label recentHeader = new Label("Recent Decks");
-        recentHeader.setFont(Responsive.font("Serif", 42));
+        recentHeader.setFont(UiScale.font("Serif", 42));
         recentHeader.setTextFill(Color.web(PRIMARY_BLUE));
 
         VBox deckList = new VBox(16);
         if (stats.recentDecks().isEmpty()) {
             Label emptyState = new Label("No decks available yet.");
-            emptyState.setFont(Responsive.font("Serif", 22));
+            emptyState.setFont(UiScale.font("Serif", 22));
             emptyState.setTextFill(Color.web("#475569"));
             deckList.getChildren().add(emptyState);
         } else {
@@ -85,13 +87,13 @@ public class DashboardPanel {
         chartBox.setStyle(BORDER_STYLE);
         chartBox.setPadding(new Insets(15));
         chartBox.setAlignment(Pos.TOP_CENTER);
-        chartBox.setMinWidth(Responsive.size(520));
-        chartBox.setPrefWidth(Responsive.size(560));
-        chartBox.setMaxWidth(Responsive.size(600));
-        chartBox.setMaxHeight(Responsive.size(540));
+        chartBox.setMinWidth(UiScale.size(520));
+        chartBox.setPrefWidth(UiScale.size(560));
+        chartBox.setMaxWidth(UiScale.size(600));
+        chartBox.setMaxHeight(UiScale.size(540));
 
         Label chartTitle = new Label("Card Difficulty Mix");
-        chartTitle.setFont(Responsive.font("Serif", 36));
+        chartTitle.setFont(UiScale.font("Serif", 36));
         chartTitle.setTextFill(Color.web(PRIMARY_BLUE));
 
         PieChart.Data easyData = new PieChart.Data("Easy", stats.easyCount() > 0 ? stats.easyCount() : 0.001);
@@ -114,8 +116,8 @@ public class DashboardPanel {
         chart.setLabelsVisible(false);
         chart.setLegendVisible(false);
         chart.setStyle("-fx-background-color: transparent;");
-        chart.setPrefSize(Responsive.size(460), Responsive.size(380));
-        chart.setMaxSize(Responsive.size(480), Responsive.size(400));
+        chart.setPrefSize(UiScale.size(460), UiScale.size(380));
+        chart.setMaxSize(UiScale.size(480), UiScale.size(400));
         VBox.setVgrow(chart, Priority.NEVER);
 
         chartBox.getChildren().addAll(chartTitle, customLegend, chart);
@@ -166,10 +168,10 @@ public class DashboardPanel {
         HBox item = new HBox(7);
         item.setAlignment(Pos.CENTER);
 
-        Circle dot = new Circle(Responsive.size(8), Color.web(colorHex));
+        Circle dot = new Circle(UiScale.size(8), Color.web(colorHex));
 
         Label lbl = new Label(name);
-        lbl.setFont(Responsive.font("SansSerif", 16));
+        lbl.setFont(UiScale.font("SansSerif", 16));
         lbl.setTextFill(Color.web("#333333"));
 
         item.getChildren().addAll(dot, lbl);
@@ -178,7 +180,7 @@ public class DashboardPanel {
 
     private static Label createHeaderLabel(String text) {
         Label header = new Label(text);
-        header.setFont(Responsive.font("Serif", 64));
+        header.setFont(UiScale.font("Serif", 64));
         header.setTextFill(Color.WHITE);
         header.setMaxWidth(Double.MAX_VALUE);
         header.setAlignment(Pos.CENTER);
@@ -189,16 +191,16 @@ public class DashboardPanel {
     private static VBox createStatCard(String title, String value) {
         VBox box = new VBox(8);
         box.setStyle(BORDER_STYLE);
-        box.setPadding(Responsive.insets(18, 24, 18, 24));
-        box.setMinHeight(Responsive.size(112));
+        box.setPadding(UiScale.insets(18, 24, 18, 24));
+        box.setMinHeight(UiScale.size(112));
         box.setMaxWidth(Double.MAX_VALUE);
 
         Label titleLbl = new Label(title);
-        titleLbl.setFont(Responsive.font("Serif", 22));
+        titleLbl.setFont(UiScale.font("Serif", 22));
         titleLbl.setTextFill(Color.BLACK);
 
         Label valLbl = new Label(value);
-        valLbl.setFont(Responsive.font("Serif", 32));
+        valLbl.setFont(UiScale.font("Serif", 32));
         valLbl.setTextFill(Color.web(PRIMARY_BLUE));
 
         box.getChildren().addAll(titleLbl, valLbl);
@@ -207,18 +209,18 @@ public class DashboardPanel {
 
     private static VBox createDeckItem(BorderPane mainLayout, Deck deck, MainController mc) {
         VBox item = new VBox(8);
-        item.setMinHeight(Responsive.size(92));
+        item.setMinHeight(UiScale.size(92));
         item.setMaxWidth(Double.MAX_VALUE);
         item.setStyle(DECK_ITEM_STYLE);
 
         Label title = new Label(deck.getName());
-        title.setFont(Responsive.font("Serif", 24));
+        title.setFont(UiScale.font("Serif", 24));
         title.setTextFill(Color.BLACK);
         title.setWrapText(true);
 
         Label details = new Label("Cards: " + mc.getFlashcardsByDeck(deck.getDeckID()).size()
                 + "    Progress: " + mc.getDeckProgress(deck.getDeckID()) + "%");
-        details.setFont(Responsive.font("Serif", 18));
+        details.setFont(UiScale.font("Serif", 18));
         details.setTextFill(Color.web(PRIMARY_BLUE));
 
         item.getChildren().addAll(title, details);

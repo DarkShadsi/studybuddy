@@ -1,5 +1,7 @@
 package com.studyapp.view;
 
+import com.studyapp.util.UiScale;
+
 import java.util.function.Consumer;
 
 import com.studyapp.controller.MainController;
@@ -38,21 +40,21 @@ public class MainFrame {
         mainLayout.setStyle("-fx-background-color: #f8fafc;");
 
         VBox sidebar = new VBox(18);
-        sidebar.setPadding(Responsive.insets(20, 24, 20, 24));
-        sidebar.setPrefWidth(Responsive.size(290));
-        sidebar.setMinWidth(Responsive.size(290));
-        sidebar.setMaxWidth(Responsive.size(290));
+        sidebar.setPadding(UiScale.insets(20, 24, 20, 24));
+        sidebar.setPrefWidth(UiScale.size(290));
+        sidebar.setMinWidth(UiScale.size(290));
+        sidebar.setMaxWidth(UiScale.size(290));
         sidebar.setStyle("-fx-background-color: transparent;");
 
         Label appTitleLabel = new Label("Study Assistant\nApplication");
-        appTitleLabel.setFont(Responsive.font("Serif", 38));
+        appTitleLabel.setFont(UiScale.font("Serif", 38));
         appTitleLabel.setWrapText(true);
-        appTitleLabel.setMaxWidth(Responsive.size(242));
+        appTitleLabel.setMaxWidth(UiScale.size(242));
         appTitleLabel.setTextFill(Color.web(PRIMARY_BLUE));
         VBox.setMargin(appTitleLabel, new Insets(0, 0, 10, 12));
 
         VBox buttonBox = new VBox(18);
-        buttonBox.setPadding(Responsive.insets(24));
+        buttonBox.setPadding(UiScale.insets(24));
         buttonBox.setStyle(BORDER_STYLE);
         VBox.setVgrow(buttonBox, Priority.ALWAYS);
 
@@ -65,8 +67,8 @@ public class MainFrame {
 
         Button exitBtn = new Button("EXIT");
         exitBtn.setMaxWidth(Double.MAX_VALUE);
-        exitBtn.setPrefHeight(Responsive.size(56));
-        exitBtn.setFont(Responsive.font("Serif", 20));
+        exitBtn.setPrefHeight(UiScale.size(56));
+        exitBtn.setFont(UiScale.font("Serif", 20));
         String exitDefault = "-fx-background-color: #ff9999; -fx-text-fill: black; -fx-border-color: " + PRIMARY_BLUE + "; -fx-border-radius: 7; -fx-background-radius: 7; -fx-padding: 14 18; -fx-cursor: hand;";
         String exitHover = "-fx-background-color: #ff6666; -fx-text-fill: white; -fx-border-color: " + PRIMARY_BLUE + "; -fx-border-radius: 7; -fx-background-radius: 7; -fx-padding: 14 18; -fx-cursor: hand;";
         exitBtn.setStyle(exitDefault);
@@ -133,21 +135,21 @@ public class MainFrame {
         mainLayout.setStyle("-fx-background-color: #f8fafc;");
 
         VBox sidebar = new VBox(18);
-        sidebar.setPadding(Responsive.insets(20, 24, 20, 24));
-        sidebar.setPrefWidth(Responsive.size(290));
-        sidebar.setMinWidth(Responsive.size(290));
-        sidebar.setMaxWidth(Responsive.size(290));
+        sidebar.setPadding(UiScale.insets(20, 24, 20, 24));
+        sidebar.setPrefWidth(UiScale.size(290));
+        sidebar.setMinWidth(UiScale.size(290));
+        sidebar.setMaxWidth(UiScale.size(290));
         sidebar.setStyle("-fx-background-color: transparent;");
 
         Label appTitleLabel = new Label("Study Assistant\nApplication");
-        appTitleLabel.setFont(Responsive.font("Serif", 38));
+        appTitleLabel.setFont(UiScale.font("Serif", 38));
         appTitleLabel.setWrapText(true);
-        appTitleLabel.setMaxWidth(Responsive.size(242));
+        appTitleLabel.setMaxWidth(UiScale.size(242));
         appTitleLabel.setTextFill(Color.web(PRIMARY_BLUE));
         VBox.setMargin(appTitleLabel, new Insets(0, 0, 10, 12));
 
         VBox buttonBox = new VBox(18);
-        buttonBox.setPadding(Responsive.insets(24));
+        buttonBox.setPadding(UiScale.insets(24));
         buttonBox.setStyle(BORDER_STYLE);
         VBox.setVgrow(buttonBox, Priority.ALWAYS);
 
@@ -160,8 +162,8 @@ public class MainFrame {
 
         Button exitBtn = new Button("EXIT");
         exitBtn.setMaxWidth(Double.MAX_VALUE);
-        exitBtn.setPrefHeight(Responsive.size(56));
-        exitBtn.setFont(Responsive.font("Serif", 20));
+        exitBtn.setPrefHeight(UiScale.size(56));
+        exitBtn.setFont(UiScale.font("Serif", 20));
         String exitDefault = "-fx-background-color: #ff9999; -fx-text-fill: black; -fx-border-color: " + PRIMARY_BLUE + "; -fx-border-radius: 7; -fx-background-radius: 7; -fx-padding: 14 18; -fx-cursor: hand;";
         String exitHover = "-fx-background-color: #ff6666; -fx-text-fill: white; -fx-border-color: " + PRIMARY_BLUE + "; -fx-border-radius: 7; -fx-background-radius: 7; -fx-padding: 14 18; -fx-cursor: hand;";
         exitBtn.setStyle(exitDefault);
@@ -195,8 +197,8 @@ public class MainFrame {
     private static Button createNavButton(String text) {
         Button btn = new Button(text);
         btn.setMaxWidth(Double.MAX_VALUE);
-        btn.setPrefHeight(Responsive.size(56));
-        btn.setFont(Responsive.font("Serif", 20));
+        btn.setPrefHeight(UiScale.size(56));
+        btn.setFont(UiScale.font("Serif", 20));
         btn.setStyle(INACTIVE_STYLE);
         btn.setOnMouseEntered(e -> {
             if (!btn.getStyle().equals(ACTIVE_STYLE)) {
