@@ -3,7 +3,9 @@ package com.studyapp.controller;
 import java.io.File;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.studyapp.db.DatabaseConnection;
@@ -11,7 +13,9 @@ import com.studyapp.model.CardReview;
 import com.studyapp.model.Deck;
 import com.studyapp.model.Flashcard;
 import com.studyapp.model.StudySession;
+import com.studyapp.service.CsvImportExportService;
 import com.studyapp.service.JsonImportExportService;
+import com.studyapp.service.SaveService;
 
 //HANDLES ALL OPERATIONS THAT CONNECTS BACKEND WITH FRONTEND
 //INCLUDES:
@@ -25,12 +29,16 @@ public class MainController {
     private FlashcardController flashcardController;
     private StudyController studyController;
     private ReviewController reviewController;
+    private AnswerChecker answerChecker;
+    private SaveService saveService;
 
     public MainController(){
         deckController = new DeckController(this);
         flashcardController = new FlashcardController(this);
         studyController = new StudyController(this);
         reviewController = new ReviewController(this);
+        answerChecker = new AnswerChecker();
+        saveService = new SaveService();
     }
 
     // --------- AUTHENTICATION --------------
@@ -131,6 +139,10 @@ public class MainController {
         studyController.deleteSession(sessionID);
     }
 
+    public String checkAnswer(String expected, String actual){
+        return answerChecker.check(expected, actual);
+    }
+
     //---------- CARD REVIEWS ----------------------//
     public void createCardReview(int sessionID, int cardID, LocalDateTime reviewedAt, boolean isCorrect) throws CustomException{
         reviewController.createCardReview(sessionID, cardID,reviewedAt, isCorrect);
@@ -226,10 +238,7 @@ public class MainController {
     }
 
     public void saveChanges() throws CustomException{
-        deckController.saveDeckToDB();
-        flashcardController.saveFlashcardToDB();
-        studyController.saveStudySessionToDB();
-        reviewController.saveReviewToDB();
+        saveService.saveAll(deckController, flashcardController, studyController, reviewController);
         System.out.println("Changes Saved to Database.");
     }
 
@@ -240,28 +249,25 @@ public class MainController {
                 || reviewController.hasPendingChanges();
     }
 
-    public void saveImportedChanges(List<Deck> importedDecks, List<Flashcard> importedFlashcards) throws CustomException {
-        deckController.saveAddedDecks(importedDecks);
-        flashcardController.saveAddedFlashcards(importedFlashcards);
-    }
-
     // --------- JSON IMPORT / EXPORT --------------
-    /**
-     * Imports decks and cards from a JSON file.
-     * Supports both single-deck and multi-deck JSON formats.
-     * @return number of decks imported
-     */
     public int importFromJson(File file) throws CustomException {
         return new JsonImportExportService().importFromFile(file, this);
     }
 
-    /**
-     * Exports a deck and all its cards to a JSON file.
-     */
+    public int importFromCsv(File file) throws CustomException {
+        return new CsvImportExportService().importFromFile(file, this);
+    }
+
     public void exportDeckToJson(int deckID, File file) throws CustomException {
         Deck deck = findDeck(deckID);
         List<Flashcard> cards = getFlashcardsByDeck(deckID);
         new JsonImportExportService().exportDeckToFile(deck, cards, file);
+    }
+
+    public void exportDeckToCsv(int deckID, File file) throws CustomException {
+        Deck deck = findDeck(deckID);
+        List<Flashcard> cards = getFlashcardsByDeck(deckID);
+        new CsvImportExportService().exportDeckToFile(deck, cards, file);
     }
 
 }

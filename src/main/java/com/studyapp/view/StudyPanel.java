@@ -151,8 +151,8 @@ public class StudyPanel {
         flashcards.addAll(rest);
     }
 
-    void showResult(boolean isCorrect, String answer, Flashcard card) {
-        mainLayout.setCenter(ResultPanel.build(this, isCorrect, card, answer, deckData));
+    void showResult(String result, String answer, Flashcard card) {
+        mainLayout.setCenter(ResultPanel.build(this, result, card, answer, deckData));
     }
 
     // ── called by QuestionPanel on SUBMIT ─────────────────────────────────────
@@ -161,7 +161,8 @@ public class StudyPanel {
 
         Flashcard card = flashcards.get(currentIndex);
         LocalDateTime reviewedAt = LocalDateTime.now();
-        boolean isCorrect = answer.trim().equalsIgnoreCase(card.getAnswer().trim());
+        String result = mc.checkAnswer(card.getAnswer(), answer);
+        boolean isCorrect = result.equals("CORRECT");
 
         // Only count the attempt if the card hasn't been correctly answered yet
         if (!correctAnswers[currentIndex]) {
@@ -185,7 +186,7 @@ public class StudyPanel {
         }
 
         refreshScore();
-        showResult(isCorrect, answer, card);
+        showResult(result, answer, card);
     }
 
     // ── called by ResultPanel nav buttons ─────────────────────────────────────
@@ -215,23 +216,46 @@ public class StudyPanel {
 
     // ── session end ───────────────────────────────────────────────────────────
     private void finishSession() {
-        endSession();
-        showFinalScore();
-        returnToDeckDetail();
+        if (!endSession()) {
+            return;
+        }
+        autosaveEndedSession(true);
     }
 
     private void endSessionEarly() {
-        endSession();
-        returnToDeckDetail();
+        if (!endSession()) {
+            return;
+        }
+        autosaveEndedSession(false);
     }
 
-    private void endSession() {
+    private boolean endSession() {
         try {
             studySession.setEndedAt(LocalDateTime.now());
             mc.updateEndStudySession(studySession);
+            return true;
         } catch (CustomException e) {
             MainFrame.showErrorDialog("Could not end session: " + e.getMessage());
+            return false;
         }
+    }
+
+    private void autosaveEndedSession(boolean showScoreAfterSave) {
+        MainFrame.runSaveTask(
+                mainLayout.getScene().getWindow(),
+                mc,
+                "Saving session...",
+                () -> {
+                    if (showScoreAfterSave) {
+                        showFinalScore();
+                    }
+                    returnToDeckDetail();
+                },
+                errorMessage -> {
+                    returnToDeckDetail();
+                    MainFrame.showErrorDialog("Session autosave failed: " + errorMessage);
+                }
+        );
     }
 
     private void returnToDeckDetail() {
