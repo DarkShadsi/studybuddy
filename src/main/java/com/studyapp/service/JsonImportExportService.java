@@ -10,6 +10,7 @@ import java.util.List;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.studyapp.controller.CustomException;
@@ -42,18 +43,48 @@ public class JsonImportExportService {
 
     /**
      * Parses a JSON file and returns a flat list of card candidates for UI preview.
-     * Accepts a JSON array of card objects: {@code [{question, answer, difficulty}, ...]}.
+     * Accepts either a JSON array of card objects, or a deck export object with a
+     * {@code cards} array.
      * Difficulty is normalised to "Easy", "Medium", or "Hard" if recognised; null otherwise.
      */
     public List<CardJson> previewCards(File file) throws CustomException {
+        return previewImport(file).getCards();
+    }
+
+    /**
+     * Parses a JSON file and returns card candidates plus optional source deck metadata.
+     * Supported shapes:
+     * {@code [{question, answer, difficulty}, ...]} and
+     * {@code {deck_name, description, exported_at, cards:[...]}}.
+     */
+    public ImportPreview previewImport(File file) throws CustomException {
         List<CardJson> result = new ArrayList<>();
+        String deckName = null;
+        String description = null;
+        String exportedAt = null;
+
         try (FileReader reader = new FileReader(file)) {
             JsonElement root = JsonParser.parseReader(reader);
-            if (!root.isJsonArray()) {
-                throw new CustomException("Invalid JSON: expected a flat card array.");
+
+            JsonElement cardsElement;
+            if (root.isJsonArray()) {
+                cardsElement = root;
+            } else if (root.isJsonObject()) {
+                JsonObject deckObject = root.getAsJsonObject();
+                cardsElement = deckObject.get("cards");
+                if (cardsElement == null || !cardsElement.isJsonArray()) {
+                    throw new CustomException("Invalid JSON: expected a card array or a deck object with a cards array.");
+                }
+                deckName = getOptionalString(deckObject, "deck_name");
+                description = getOptionalString(deckObject, "description");
+                exportedAt = getOptionalString(deckObject, "exported_at");
+            } else {
+                throw new CustomException("Invalid JSON: expected a card array or a deck object with a cards array.");
             }
-            CardJson[] arr = GSON.fromJson(root, CardJson[].class);
+
+            CardJson[] arr = GSON.fromJson(cardsElement, CardJson[].class);
             for (CardJson c : arr) {
+                if (c == null) continue;
                 if (c.getQuestion() == null || c.getQuestion().isBlank()) continue;
                 if (c.getAnswer()   == null || c.getAnswer().isBlank())   continue;
                 result.add(new CardJson(
@@ -67,7 +98,14 @@ public class JsonImportExportService {
         } catch (IOException e) {
             throw new CustomException("Could not read file: " + e.getMessage());
         }
-        return result;
+        return new ImportPreview(result, deckName, description, exportedAt);
+    }
+
+    private String getOptionalString(JsonObject object, String fieldName) {
+        JsonElement value = object.get(fieldName);
+        if (value == null || value.isJsonNull()) return null;
+        if (!value.isJsonPrimitive()) return null;
+        return value.getAsString();
     }
 
     /** Returns "Easy", "Medium", or "Hard" if recognised; null otherwise. */

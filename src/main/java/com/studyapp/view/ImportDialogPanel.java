@@ -9,6 +9,7 @@ import com.studyapp.controller.CustomException;
 import com.studyapp.controller.MainController;
 import com.studyapp.model.Deck;
 import com.studyapp.service.CardJson;
+import com.studyapp.service.ImportPreview;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -55,7 +56,7 @@ import javafx.stage.StageStyle;
  * ├──────────────────────────┬────────────────────────────────────┤
  * │ ADD TO DECK:             │                  [SELECT ALL □]    │
  * │  ○ Add to Existing Deck  │  ╔══════════════════════════════╗  │
- * │    [deck dropdown]       │  ║ placeholder / editable table ║  │
+ * │    [deck dropdown]       │  ║ placeholder / preview table  ║  │
  * │  ○ Add to New Deck       │  ╚══════════════════════════════╝  │
  * │    [name field]          │                                    │
  * │    [desc field]          │                                    │
@@ -263,17 +264,6 @@ public class ImportDialogPanel {
 
         Button cancelBtn = actionButton("CANCEL", "#e57373", "#d32f2f");
 
-        // ── file-load handlers ─────────────────────────────────────────
-        csvBtn.setOnAction(e -> {
-            File f = chooseFile(dialog, "Import from CSV", "CSV Files", "*.csv");
-            if (f != null) loadPreview(f, "CSV", cardRows, importBtn, mc);
-        });
-
-        jsonBtn.setOnAction(e -> {
-            File f = chooseFile(dialog, "Import from JSON", "JSON Files", "*.json");
-            if (f != null) loadPreview(f, "JSON", cardRows, importBtn, mc);
-        });
-
         // ── cancel handler ─────────────────────────────────────────────
         cancelBtn.setOnAction(e -> {
             if (confirmCancel(dialog)) dialog.close();
@@ -369,9 +359,44 @@ public class ImportDialogPanel {
         CheckBox selectAllCb = new CheckBox("SELECT ALL");
         selectAllCb.setFont(Font.font("Serif", 13));
         selectAllCb.setTextFill(Color.web(PRIMARY_BLUE));
-        HBox selectAllRow = new HBox(selectAllCb);
+        Button editPreviewBtn = new Button("EDIT PREVIEW");
+        editPreviewBtn.setFont(Font.font("Serif", 12));
+        editPreviewBtn.setStyle("-fx-background-color: white; -fx-text-fill: " + PRIMARY_BLUE + "; "
+                + "-fx-border-color: " + PANEL_BORDER + "; -fx-border-radius: 6; -fx-background-radius: 6; "
+                + "-fx-padding: 6 12; -fx-cursor: hand;");
+
+        BooleanProperty editPreviewMode = new SimpleBooleanProperty(false);
+        HBox selectAllRow = new HBox(16, selectAllCb, editPreviewBtn);
         selectAllRow.setAlignment(Pos.CENTER_LEFT);
         selectAllRow.setPadding(new Insets(0, 0, 4, 4));
+
+        Label sourceDeckInfo = new Label();
+        sourceDeckInfo.setFont(Font.font("Serif", 14));
+        sourceDeckInfo.setTextFill(Color.web(PRIMARY_BLUE));
+        sourceDeckInfo.setWrapText(true);
+        sourceDeckInfo.setVisible(false);
+        sourceDeckInfo.setManaged(false);
+        sourceDeckInfo.setStyle(
+            "-fx-background-color: white; " +
+            "-fx-border-color: " + PANEL_BORDER + "; " +
+            "-fx-border-width: 1; " +
+            "-fx-border-radius: 8; -fx-background-radius: 8; " +
+            "-fx-padding: 8 12;"
+        );
+
+        csvBtn.setOnAction(e -> {
+            File f = chooseFile(dialog, "Import from CSV", "CSV Files", "*.csv");
+            if (f != null) {
+                loadPreview(f, "CSV", cardRows, importBtn, selectAllCb, nameField, descField, sourceDeckInfo, mc);
+            }
+        });
+
+        jsonBtn.setOnAction(e -> {
+            File f = chooseFile(dialog, "Import from JSON", "JSON Files", "*.json");
+            if (f != null) {
+                loadPreview(f, "JSON", cardRows, importBtn, selectAllCb, nameField, descField, sourceDeckInfo, mc);
+            }
+        });
 
         // Placeholder (shown before any file is loaded)
         StackPane placeholder = new StackPane();
@@ -383,10 +408,17 @@ public class ImportDialogPanel {
         placeholder.getChildren().add(placeholderLbl);
 
         // Table (hidden until cards are loaded)
-        TableView<CardRowData> table = buildTable(cardRows, selectAllCb, importBtn);
+        TableView<CardRowData> table = buildTable(cardRows, selectAllCb, importBtn, editPreviewMode);
         table.setVisible(false);
         table.setManaged(false);
         VBox.setVgrow(table, Priority.ALWAYS);
+
+        editPreviewBtn.setOnAction(e -> {
+            boolean editing = !editPreviewMode.get();
+            editPreviewMode.set(editing);
+            editPreviewBtn.setText(editing ? "LOCK PREVIEW" : "EDIT PREVIEW");
+            table.refresh();
+        });
 
         // Swap placeholder ↔ table when cardRows changes
         cardRows.addListener((ListChangeListener<CardRowData>) c -> {
@@ -402,7 +434,7 @@ public class ImportDialogPanel {
         HBox.setHgrow(cancelBtn, Priority.ALWAYS);
         actionRow.setPadding(new Insets(12, 0, 0, 0));
 
-        right.getChildren().addAll(selectAllRow, placeholder, table, actionRow);
+        right.getChildren().addAll(selectAllRow, sourceDeckInfo, placeholder, table, actionRow);
 
         body.getChildren().addAll(left, right);
         root.getChildren().addAll(titleLbl, body);
@@ -419,10 +451,10 @@ public class ImportDialogPanel {
 
     /**
      * Builds the preview {@link TableView} with four columns:
-     * {@code □ | QUESTION (editable) | ANSWER (editable) | DIFFICULTY (dropdown)}.
+     * {@code checkbox | QUESTION | ANSWER | DIFFICULTY}.
      *
-     * <p>Edits to the question and answer fields are reflected immediately in the
-     * backing {@link CardRowData} via bidirectional binding — no commit step needed.
+     * <p>Rows are read-only by default. The EDIT PREVIEW toggle swaps question,
+     * answer, and difficulty cells into editable controls.
      *
      * @param rows        observable list that backs the table
      * @param selectAllCb the "SELECT ALL" checkbox for bulk selection
@@ -431,7 +463,8 @@ public class ImportDialogPanel {
     private static TableView<CardRowData> buildTable(
             ObservableList<CardRowData> rows,
             CheckBox selectAllCb,
-            Button importBtn) {
+            Button importBtn,
+            BooleanProperty editPreviewMode) {
 
         TableView<CardRowData> table = new TableView<>(rows);
         table.setEditable(true);
@@ -459,13 +492,13 @@ public class ImportDialogPanel {
         TableColumn<CardRowData, String> qCol = new TableColumn<>("QUESTION");
         qCol.setSortable(false);
         qCol.setCellValueFactory(cell -> cell.getValue().questionProperty());
-        qCol.setCellFactory(col -> alwaysEditableTextCell(CardRowData::questionProperty));
+        qCol.setCellFactory(col -> previewTextCell(CardRowData::questionProperty, editPreviewMode));
 
         // ── answer column ──────────────────────────────────────────────
         TableColumn<CardRowData, String> aCol = new TableColumn<>("ANSWER");
         aCol.setSortable(false);
         aCol.setCellValueFactory(cell -> cell.getValue().answerProperty());
-        aCol.setCellFactory(col -> alwaysEditableTextCell(CardRowData::answerProperty));
+        aCol.setCellFactory(col -> previewTextCell(CardRowData::answerProperty, editPreviewMode));
 
         // ── difficulty column ──────────────────────────────────────────
         TableColumn<CardRowData, String> dCol = new TableColumn<>("DIFFICULTY");
@@ -474,7 +507,7 @@ public class ImportDialogPanel {
         dCol.setMaxWidth(180);
         dCol.setSortable(false);
         dCol.setCellValueFactory(cell -> cell.getValue().difficultyProperty());
-        dCol.setCellFactory(col -> difficultyComboCell());
+        dCol.setCellFactory(col -> difficultyComboCell(editPreviewMode));
 
         table.getColumns().addAll(cbCol, qCol, aCol, dCol);
 
@@ -502,22 +535,34 @@ public class ImportDialogPanel {
     }
 
     /**
-     * Creates a {@link TableCell} whose visual is always a {@link TextField} — the cell
-     * is never in a plain-text "view" mode.  Edits flow directly into the model via a
-     * bidirectional binding that is re-established whenever the cell is recycled for a
-     * different row.
+     * Creates a {@link TableCell} that shows a read-only label until preview-edit mode
+     * is enabled, then swaps to a {@link TextArea}. Edits flow directly into the model.
      *
      * @param propGetter extracts the {@link StringProperty} to bind from a row object
      */
-    private static TableCell<CardRowData, String> alwaysEditableTextCell(
-            Function<CardRowData, StringProperty> propGetter) {
+    private static TableCell<CardRowData, String> previewTextCell(
+            Function<CardRowData, StringProperty> propGetter,
+            BooleanProperty editPreviewMode) {
 
         return new TableCell<CardRowData, String>() {
 
             private final TextArea ta = new TextArea();
+            private final Label label = new Label();
             private CardRowData boundRow = null;
 
             {
+                label.setWrapText(true);
+                label.setMaxWidth(Double.MAX_VALUE);
+                label.setMinHeight(54);
+                label.setPadding(new Insets(8, 10, 8, 10));
+                label.setStyle(
+                    "-fx-background-color: white; " +
+                    "-fx-border-color: " + PANEL_BORDER + "; " +
+                    "-fx-border-width: 1; " +
+                    "-fx-border-radius: 4; -fx-background-radius: 4; " +
+                    "-fx-font-family: Serif; -fx-font-size: 15;"
+                );
+
                 ta.setWrapText(true);
                 ta.setStyle(
                     "-fx-background-color: white; " +
@@ -526,6 +571,7 @@ public class ImportDialogPanel {
                     "-fx-border-radius: 4; -fx-background-radius: 4; " +
                     "-fx-font-family: Serif; -fx-font-size: 15; -fx-padding: 4 6;"
                 );
+                ta.setEditable(true);
                 ta.setMaxWidth(Double.MAX_VALUE);
                 ta.setMinHeight(54);
                 ta.textProperty().addListener((obs, old, nv) -> adjustHeight(nv));
@@ -548,6 +594,7 @@ public class ImportDialogPanel {
                     // Detach from the old row when the cell is cleared
                     if (boundRow != null) {
                         ta.textProperty().unbindBidirectional(propGetter.apply(boundRow));
+                        label.textProperty().unbind();
                         boundRow = null;
                     }
                     setGraphic(null);
@@ -557,12 +604,14 @@ public class ImportDialogPanel {
                     if (boundRow != row) {
                         if (boundRow != null) {
                             ta.textProperty().unbindBidirectional(propGetter.apply(boundRow));
+                            label.textProperty().unbind();
                         }
                         boundRow = row;
                         ta.textProperty().bindBidirectional(propGetter.apply(row));
+                        label.textProperty().bind(propGetter.apply(row));
                     }
                     adjustHeight(ta.getText());
-                    setGraphic(ta);
+                    setGraphic(editPreviewMode.get() ? ta : label);
                     setText(null);
                 }
             }
@@ -570,20 +619,32 @@ public class ImportDialogPanel {
     }
 
     /**
-     * Creates a {@link TableCell} that always shows a difficulty {@link ComboBox} with:
+     * Creates a {@link TableCell} that shows a read-only difficulty label until
+     * preview-edit mode is enabled, then swaps to a {@link ComboBox} with:
      * "--Select Difficulty--", "Easy", "Medium", "Hard" (in that order).
      *
      * <p>Selecting "--Select Difficulty--" stores {@code null} in the model.
      * Selecting any other option stores the string value directly.
      */
-    private static TableCell<CardRowData, String> difficultyComboCell() {
+    private static TableCell<CardRowData, String> difficultyComboCell(BooleanProperty editPreviewMode) {
 
         return new TableCell<CardRowData, String>() {
 
             private final ComboBox<String> combo = new ComboBox<>();
+            private final Label label = new Label();
             private CardRowData boundRow = null;
 
             {
+                label.setMaxWidth(Double.MAX_VALUE);
+                label.setPadding(new Insets(8, 10, 8, 10));
+                label.setStyle(
+                    "-fx-background-color: white; " +
+                    "-fx-border-color: " + PANEL_BORDER + "; " +
+                    "-fx-border-width: 1; " +
+                    "-fx-border-radius: 4; -fx-background-radius: 4; " +
+                    "-fx-font-family: Serif; -fx-font-size: 15;"
+                );
+
                 combo.getItems().addAll("--Select Difficulty--", "Easy", "Medium", "Hard");
                 combo.setMaxWidth(Double.MAX_VALUE);
                 combo.setStyle(
@@ -618,7 +679,8 @@ public class ImportDialogPanel {
                     if (!display.equals(combo.getValue())) {
                         combo.setValue(display);
                     }
-                    setGraphic(combo);
+                    label.setText(display);
+                    setGraphic(editPreviewMode.get() ? combo : label);
                     setText(null);
                 }
             }
@@ -638,27 +700,36 @@ public class ImportDialogPanel {
      * @param format    {@code "CSV"} or {@code "JSON"}
      * @param cardRows  observable list to populate (existing contents are replaced)
      * @param importBtn button whose disabled state depends on row selection
+     * @param selectAllCb checkbox reset after each file load
+     * @param nameField new-deck name field that deck JSON may prefill
+     * @param descField new-deck description field that deck JSON may prefill
+     * @param sourceDeckInfo label that displays optional source deck metadata
      * @param mc        controller that delegates to the service layer
      */
     private static void loadPreview(
             File file, String format,
             ObservableList<CardRowData> cardRows,
             Button importBtn,
+            CheckBox selectAllCb,
+            TextField nameField,
+            TextField descField,
+            Label sourceDeckInfo,
             MainController mc) {
 
         try {
-            List<CardJson> cards = "CSV".equals(format)
-                ? mc.previewCsvCards(file)
-                : mc.previewJsonCards(file);
+            ImportPreview preview = "CSV".equals(format)
+                ? new ImportPreview(mc.previewCsvCards(file), null, null, null)
+                : mc.previewJsonImport(file);
 
             List<CardRowData> newRows = new ArrayList<>();
-            for (CardJson c : cards) {
+            for (CardJson c : preview.getCards()) {
                 newRows.add(new CardRowData(c.getQuestion(), c.getAnswer(), c.getDifficulty()));
             }
-            cardRows.setAll(newRows);   // triggers ListChangeListener → per-row listeners attached
+            cardRows.setAll(newRows);
 
-            // Reset the import button (no rows selected yet after a fresh load)
             importBtn.setDisable(true);
+            selectAllCb.setSelected(false);
+            updateSourceDeckInfo(preview, nameField, descField, sourceDeckInfo, cardRows.size());
 
             if (cardRows.isEmpty()) {
                 MainFrame.showErrorDialog(
@@ -673,6 +744,52 @@ public class ImportDialogPanel {
     // ────────────────────────────────────────────────────────────────
     // Small helpers
     // ────────────────────────────────────────────────────────────────
+
+    private static void updateSourceDeckInfo(
+            ImportPreview preview,
+            TextField nameField,
+            TextField descField,
+            Label sourceDeckInfo,
+            int cardCount) {
+        if (preview == null || !preview.hasDeckMetadata()) {
+            sourceDeckInfo.setText("");
+            sourceDeckInfo.setVisible(false);
+            sourceDeckInfo.setManaged(false);
+            return;
+        }
+
+        String deckName = trimToNull(preview.getDeckName());
+        String description = trimToNull(preview.getDescription());
+        String exportedAt = trimToNull(preview.getExportedAt());
+
+        if (deckName != null) {
+            nameField.setText(deckName);
+        }
+        if (description != null) {
+            descField.setText(description);
+        }
+
+        StringBuilder text = new StringBuilder();
+        text.append("Loaded deck: ").append(deckName == null ? "(unnamed deck)" : deckName);
+        text.append("\nCards found: ").append(cardCount);
+        if (description != null) {
+            text.append("\nDescription: ").append(description);
+        }
+        if (exportedAt != null) {
+            text.append("\nExported at: ").append(exportedAt);
+        }
+
+        sourceDeckInfo.setText(text.toString());
+        sourceDeckInfo.setVisible(true);
+        sourceDeckInfo.setManaged(true);
+    }
+
+    private static String trimToNull(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim();
+    }
 
     /** Opens a file-chooser dialog and returns the chosen file, or {@code null} if cancelled. */
     private static File chooseFile(Stage owner, String title, String filterDesc, String ext) {

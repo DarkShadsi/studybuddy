@@ -15,6 +15,7 @@ import com.studyapp.model.Flashcard;
 import com.studyapp.model.StudySession;
 import com.studyapp.service.CardJson;
 import com.studyapp.service.CsvImportExportService;
+import com.studyapp.service.ImportPreview;
 import com.studyapp.service.JsonImportExportService;
 import com.studyapp.service.SaveService;
 
@@ -275,6 +276,17 @@ public class MainController {
      */
     public List<CardJson> previewJsonCards(File file) throws CustomException {
         return new JsonImportExportService().previewCards(file);
+    }
+
+    /**
+     * Parses a JSON file and returns cards plus optional deck metadata for import preview.
+     *
+     * @param file JSON file containing either a card array or a deck object with cards
+     * @return preview data for the import dialog
+     * @throws CustomException on read or parse errors
+     */
+    public ImportPreview previewJsonImport(File file) throws CustomException {
+        return new JsonImportExportService().previewImport(file);
     }
 
     /**
