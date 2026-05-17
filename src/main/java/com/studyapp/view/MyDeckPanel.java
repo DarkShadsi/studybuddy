@@ -1,5 +1,7 @@
 package com.studyapp.view;
 
+import com.studyapp.util.UiScale;
+
 import java.io.File;
 import java.util.List;
 
@@ -34,13 +36,17 @@ public class MyDeckPanel {
     private static final String PRIMARY_BLUE = "#2a548f";
     private static final String HEADER_BLUE = "#41729f";
     private static final String BORDER_STYLE = "-fx-border-color: " + PRIMARY_BLUE + "; -fx-border-radius: 10; -fx-background-radius: 10; -fx-background-color: white;";
-    private static final String TOOLBAR_BUTTON_STYLE = "-fx-background-color: white; -fx-border-color: #22c55e; -fx-border-radius: 5; -fx-text-fill: black; -fx-padding: 5 20; -fx-cursor: hand;";
-    private static final String TOOLBAR_BUTTON_HOVER_STYLE = "-fx-background-color: #eafbf1; -fx-border-color: #22c55e; -fx-border-radius: 5; -fx-text-fill: black; -fx-padding: 5 20; -fx-cursor: hand;";
-    private static final String DECK_ROW_STYLE = "-fx-border-color: " + PRIMARY_BLUE + "; -fx-border-radius: 8; -fx-background-color: white; -fx-padding: 15; -fx-cursor: hand;";
-    private static final String DECK_ROW_HOVER_STYLE = "-fx-border-color: " + PRIMARY_BLUE + "; -fx-border-radius: 8; -fx-background-color: #f8fbff; -fx-padding: 15; -fx-cursor: hand;";
-    private static final String OPEN_BUTTON_STYLE = "-fx-background-color: #e6eaf5; -fx-border-color: " + PRIMARY_BLUE + "; -fx-border-radius: 8; -fx-background-radius: 8; -fx-text-fill: black; -fx-padding: 8 20; -fx-cursor: hand;";
-    private static final String OPEN_BUTTON_HOVER_STYLE = "-fx-background-color: #d0dcf5; -fx-border-color: " + PRIMARY_BLUE + "; -fx-border-radius: 8; -fx-background-radius: 8; -fx-text-fill: black; -fx-padding: 8 20; -fx-cursor: hand;";
+    private static final String TOOLBAR_BUTTON_STYLE = "-fx-background-color: white; -fx-border-color: #22c55e; -fx-border-radius: 6; -fx-background-radius: 6; -fx-text-fill: black; -fx-padding: 10 28; -fx-font-family: 'Segoe UI'; -fx-font-size: 18px; -fx-font-weight: bold; -fx-cursor: hand;";
+    private static final String TOOLBAR_BUTTON_HOVER_STYLE = "-fx-background-color: #eafbf1; -fx-border-color: #22c55e; -fx-border-radius: 6; -fx-background-radius: 6; -fx-text-fill: black; -fx-padding: 10 28; -fx-font-family: 'Segoe UI'; -fx-font-size: 18px; -fx-font-weight: bold; -fx-cursor: hand;";
+    private static final String DECK_ROW_STYLE = "-fx-border-color: " + PRIMARY_BLUE + "; -fx-border-radius: 8; -fx-background-color: white; -fx-padding: 20 22; -fx-cursor: hand;";
+    private static final String DECK_ROW_HOVER_STYLE = "-fx-border-color: " + PRIMARY_BLUE + "; -fx-border-radius: 8; -fx-background-color: #f8fbff; -fx-padding: 20 22; -fx-cursor: hand;";
+    private static final String OPEN_BUTTON_STYLE = "-fx-background-color: #e6eaf5; -fx-border-color: " + PRIMARY_BLUE + "; -fx-border-radius: 8; -fx-background-radius: 8; -fx-text-fill: black; -fx-padding: 10 24; -fx-font-family: 'Segoe UI'; -fx-font-size: 16px; -fx-font-weight: bold; -fx-cursor: hand;";
+    private static final String OPEN_BUTTON_HOVER_STYLE = "-fx-background-color: #d0dcf5; -fx-border-color: " + PRIMARY_BLUE + "; -fx-border-radius: 8; -fx-background-radius: 8; -fx-text-fill: black; -fx-padding: 10 24; -fx-font-family: 'Segoe UI'; -fx-font-size: 16px; -fx-font-weight: bold; -fx-cursor: hand;";
+    private static final String TOOLBAR_INPUT_STYLE = "-fx-border-color: " + PRIMARY_BLUE + "; -fx-background-color: white; -fx-border-radius: 6; -fx-background-radius: 6; -fx-font-family: 'Segoe UI'; -fx-font-size: 18px; -fx-padding: 6 12;";
     private static final String DIALOG_BG = "#f8fafc";
+    private static final Insets PAGE_PADDING = new Insets(12);
+    private static final Insets CONTENT_PADDING = new Insets(14);
+    private static final int CONTENT_SPACING = 12;
 
     // ── NEW: page size constant ──────────────────────────────────────────────
     private static final int PAGE_SIZE = 5;
@@ -55,24 +61,27 @@ public class MyDeckPanel {
         List<Deck> decks = mc.allDecks();
 
         VBox wrapper = new VBox();
-        wrapper.setPadding(new Insets(20));
+        wrapper.setPadding(PAGE_PADDING);
         wrapper.setStyle("-fx-background-color: transparent;");
         VBox.setVgrow(wrapper, Priority.ALWAYS);
 
-        VBox mainContent = new VBox(20);
-        mainContent.setPadding(new Insets(20));
+        VBox mainContent = new VBox(CONTENT_SPACING);
+        mainContent.setPadding(CONTENT_PADDING);
         mainContent.setStyle(BORDER_STYLE);
+        mainContent.setMaxWidth(Double.MAX_VALUE);
+        mainContent.setMaxHeight(Double.MAX_VALUE);
         VBox.setVgrow(mainContent, Priority.ALWAYS);
 
         Label header = new Label("My Decks");
-        header.setFont(Font.font("Serif", 32));
+        header.setFont(UiScale.titleFont(64));
         header.setTextFill(Color.WHITE);
         header.setMaxWidth(Double.MAX_VALUE);
         header.setAlignment(Pos.CENTER);
         header.setStyle("-fx-background-color: " + HEADER_BLUE + "; -fx-background-radius: 8; -fx-padding: 10;");
 
-        HBox toolbar = new HBox(15);
+        HBox toolbar = new HBox(18);
         toolbar.setAlignment(Pos.CENTER_LEFT);
+        toolbar.setPadding(new Insets(4, 0, 6, 0));
 
         Button newBtn = createToolbarButton("New");
         Button importBtn = createToolbarButton("Import");
@@ -95,29 +104,31 @@ public class MyDeckPanel {
 
         TextField searchField = new TextField();
         searchField.setPromptText("Search decks");
-        searchField.setPrefWidth(200);
-        searchField.setStyle("-fx-border-color: black; -fx-background-color: white; -fx-border-radius: 0;");
+        searchField.setPrefWidth(UiScale.size(340));
+        searchField.setPrefHeight(UiScale.size(44));
+        searchField.setStyle(TOOLBAR_INPUT_STYLE);
 
         Label searchIcon = new Label("Search");
-        searchIcon.setFont(Font.font("Serif", 14));
+        searchIcon.setFont(UiScale.bodyFont(20));
         searchIcon.setTextFill(Color.web(PRIMARY_BLUE));
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         Label sortLabel = new Label("Sort by:");
-        sortLabel.setFont(Font.font("Serif", 16));
+        sortLabel.setFont(UiScale.bodyFont(20));
 
         ComboBox<String> sortCombo = new ComboBox<>();
         sortCombo.getItems().addAll("Newest", "Oldest", "Name");
         sortCombo.setValue("Newest");
-        sortCombo.setStyle("-fx-border-color: black; -fx-background-color: white; -fx-border-radius: 0;");
-        sortCombo.setPrefWidth(120);
+        sortCombo.setStyle(TOOLBAR_INPUT_STYLE);
+        sortCombo.setPrefWidth(UiScale.size(180));
+        sortCombo.setPrefHeight(UiScale.size(44));
 
         toolbar.getChildren().addAll(newBtn, importBtn, exportBtn, searchField, searchIcon, spacer, sortLabel, sortCombo);
 
         Label statusLabel = new Label(statusMessage);
-        statusLabel.setFont(Font.font("Serif", 15));
+        statusLabel.setFont(UiScale.bodyFont(15));
         statusLabel.setTextFill(Color.web(statusColor));
         statusLabel.setWrapText(true);
 
@@ -130,32 +141,36 @@ public class MyDeckPanel {
         deckList.setPadding(new Insets(5, 15, 5, 5));
         deckList.setStyle("-fx-background-color: white;");
 
+        HBox paginationBar = new HBox(10);
+        paginationBar.setAlignment(Pos.CENTER);
+        paginationBar.setPadding(new Insets(10, 0, 4, 0));
+
         // ── NEW: shared mutable page tracker ────────────────────────────────
         int[] currentPage = {0};
 
-        updateDeckList(deckList, decks, "", "Newest", currentPage[0], mainLayout, mc);
+        updateDeckList(deckList, paginationBar, decks, "", "Newest", currentPage[0], mainLayout, mc);
 
         // Search listener — reset to page 0 on new query
         searchField.textProperty().addListener((observable, oldValue, newValue) -> {
             currentPage[0] = 0;
-            updateDeckList(deckList, decks, newValue, sortCombo.getValue(), currentPage[0], mainLayout, mc);
+            updateDeckList(deckList, paginationBar, decks, newValue, sortCombo.getValue(), currentPage[0], mainLayout, mc);
         });
 
         // Sort listener — reset to page 0 on new sort
         sortCombo.setOnAction(e -> {
             currentPage[0] = 0;
-            updateDeckList(deckList, decks, searchField.getText(), sortCombo.getValue(), currentPage[0], mainLayout, mc);
+            updateDeckList(deckList, paginationBar, decks, searchField.getText(), sortCombo.getValue(), currentPage[0], mainLayout, mc);
         });
 
         scrollPane.setContent(deckList);
-        mainContent.getChildren().addAll(header, toolbar, statusLabel, scrollPane);
+        mainContent.getChildren().addAll(header, toolbar, statusLabel, scrollPane, paginationBar);
         wrapper.getChildren().add(mainContent);
 
         return wrapper;
     }
 
     // ── UPDATED: added pageIndex param; builds deck slice + pagination bar ──
-    private static void updateDeckList(VBox deckList, List<Deck> allDecks, String searchQuery,
+    private static void updateDeckList(VBox deckList, HBox paginationBar, List<Deck> allDecks, String searchQuery,
                                        String sortOption, int pageIndex,
                                        BorderPane mainLayout, MainController mc) {
         String query = searchQuery == null ? "" : searchQuery.toLowerCase().trim();
@@ -183,15 +198,21 @@ public class MyDeckPanel {
         }
 
         deckList.getChildren().clear();
+        paginationBar.getChildren().clear();
 
         if (filteredDecks.isEmpty()) {
             Label emptyLabel = new Label("No decks found");
-            emptyLabel.setFont(Font.font("Serif", 16));
+            emptyLabel.setFont(UiScale.bodyFont(16));
             emptyLabel.setTextFill(Color.GRAY);
             emptyLabel.setPadding(new Insets(20));
             deckList.getChildren().add(emptyLabel);
+            paginationBar.setVisible(false);
+            paginationBar.setManaged(false);
             return;
         }
+
+        paginationBar.setVisible(true);
+        paginationBar.setManaged(true);
 
         // ── Slice to current page ────────────────────────────────────────────
         int totalPages = (int) Math.ceil((double) filteredDecks.size() / PAGE_SIZE);
@@ -205,45 +226,37 @@ public class MyDeckPanel {
         }
 
         // ── Pagination bar ───────────────────────────────────────────────────
-        HBox pagination = new HBox(10);
-        pagination.setAlignment(Pos.CENTER);
-        pagination.setPadding(new Insets(10, 0, 5, 0));
-
-        Button prevBtn = new Button("← Prev");
+        Button prevBtn = new Button("< Prev");
         prevBtn.setStyle(OPEN_BUTTON_STYLE);
         prevBtn.setDisable(safePage == 0);
         prevBtn.setOnMouseEntered(e -> { if (!prevBtn.isDisabled()) prevBtn.setStyle(OPEN_BUTTON_HOVER_STYLE); });
         prevBtn.setOnMouseExited(e  -> { if (!prevBtn.isDisabled()) prevBtn.setStyle(OPEN_BUTTON_STYLE); });
 
         Label pageLabel = new Label("Page " + (safePage + 1) + " of " + totalPages);
-        pageLabel.setFont(Font.font("Serif", 14));
+        pageLabel.setFont(UiScale.bodyFont(18));
         pageLabel.setTextFill(Color.web(PRIMARY_BLUE));
 
-        Button nextBtn = new Button("Next →");
+        Button nextBtn = new Button("Next >");
         nextBtn.setStyle(OPEN_BUTTON_STYLE);
         nextBtn.setDisable(safePage >= totalPages - 1);
         nextBtn.setOnMouseEntered(e -> { if (!nextBtn.isDisabled()) nextBtn.setStyle(OPEN_BUTTON_HOVER_STYLE); });
         nextBtn.setOnMouseExited(e  -> { if (!nextBtn.isDisabled()) nextBtn.setStyle(OPEN_BUTTON_STYLE); });
 
-        int[] pageRef = {safePage};
-
         prevBtn.setOnAction(e -> {
-            pageRef[0]--;
-            updateDeckList(deckList, allDecks, searchQuery, sortOption, pageRef[0], mainLayout, mc);
+            updateDeckList(deckList, paginationBar, allDecks, searchQuery, sortOption, safePage - 1, mainLayout, mc);
         });
         nextBtn.setOnAction(e -> {
-            pageRef[0]++;
-            updateDeckList(deckList, allDecks, searchQuery, sortOption, pageRef[0], mainLayout, mc);
+            updateDeckList(deckList, paginationBar, allDecks, searchQuery, sortOption, safePage + 1, mainLayout, mc);
         });
 
-        pagination.getChildren().addAll(prevBtn, pageLabel, nextBtn);
-        deckList.getChildren().add(pagination);
+        paginationBar.getChildren().addAll(prevBtn, pageLabel, nextBtn);
     }
 
     // ── Everything below is unchanged ────────────────────────────────────────
 
     private static Button createToolbarButton(String text) {
         Button button = new Button(text);
+        button.setPrefHeight(UiScale.size(44));
         button.setStyle(TOOLBAR_BUTTON_STYLE);
         button.setOnMouseEntered(e -> button.setStyle(TOOLBAR_BUTTON_HOVER_STYLE));
         button.setOnMouseExited(e -> button.setStyle(TOOLBAR_BUTTON_STYLE));
@@ -251,31 +264,35 @@ public class MyDeckPanel {
     }
 
     private static HBox createDeckItem(Deck deck, BorderPane mainLayout, MainController mc) {
-        HBox row = new HBox(20);
+        HBox row = new HBox(24);
         row.setStyle(DECK_ROW_STYLE);
         row.setAlignment(Pos.CENTER_LEFT);
+        row.setMinHeight(UiScale.size(124));
         row.setOnMouseEntered(e -> row.setStyle(DECK_ROW_HOVER_STYLE));
         row.setOnMouseExited(e -> row.setStyle(DECK_ROW_STYLE));
 
-        VBox leftInfo = new VBox(5);
-        leftInfo.setPrefWidth(250);
+        VBox leftInfo = new VBox(8);
+        leftInfo.setPrefWidth(UiScale.size(330));
         Label idLbl = new Label("ID: " + deck.getDeckID());
-        idLbl.setFont(Font.font("Serif", 14));
+        idLbl.setFont(UiScale.bodyFont(18));
         Label titleLbl = new Label(deck.getName());
-        titleLbl.setFont(Font.font("Serif", 18));
+        titleLbl.setFont(UiScale.headingFont(24));
+        titleLbl.setWrapText(true);
         leftInfo.getChildren().addAll(idLbl, titleLbl);
 
-        VBox middleInfo = new VBox(5);
+        VBox middleInfo = new VBox(8);
         Label cardsLbl = new Label("Cards: " + mc.getFlashcardsByDeck(deck.getDeckID()).size());
-        cardsLbl.setFont(Font.font("Serif", 14));
+        cardsLbl.setFont(UiScale.bodyFont(20));
         Label progLbl = new Label(String.format("Progress: %d%%", mc.getDeckProgress(deck.getDeckID())));
-        progLbl.setFont(Font.font("Serif", 14));
+        progLbl.setFont(UiScale.bodyFont(20));
         middleInfo.getChildren().addAll(cardsLbl, progLbl);
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         Button selectBtn = new Button("OPEN");
+        selectBtn.setPrefWidth(UiScale.size(120));
+        selectBtn.setPrefHeight(UiScale.size(48));
         selectBtn.setStyle(OPEN_BUTTON_STYLE);
         selectBtn.setOnMouseEntered(e -> selectBtn.setStyle(OPEN_BUTTON_HOVER_STYLE));
         selectBtn.setOnMouseExited(e -> selectBtn.setStyle(OPEN_BUTTON_STYLE));
@@ -285,7 +302,10 @@ public class MyDeckPanel {
                 mc,
                 () -> mainLayout.setCenter(MyDeckPanel.create(mainLayout, mc))));
 
-        row.getChildren().addAll(leftInfo, middleInfo, spacer, selectBtn);
+        HBox actions = new HBox(8, selectBtn);
+        actions.setAlignment(Pos.CENTER_RIGHT);
+
+        row.getChildren().addAll(leftInfo, middleInfo, spacer, actions);
         return row;
     }
 
@@ -299,11 +319,11 @@ public class MyDeckPanel {
         HBox topBar = createDialogTopBar(dialog);
 
         Label title = new Label("Import Deck");
-        title.setFont(Font.font("Serif", 38));
+        title.setFont(UiScale.headingFont(38));
         title.setTextFill(Color.web(PRIMARY_BLUE));
 
         Label description = new Label("Choose which file type you want to import.");
-        description.setFont(Font.font("Serif", 15));
+        description.setFont(UiScale.bodyFont(18));
         description.setTextFill(Color.web(PRIMARY_BLUE));
         description.setWrapText(true);
 
@@ -371,20 +391,20 @@ public class MyDeckPanel {
         VBox.setMargin(topBar, new Insets(5, -30, 0, 0));
 
         Label title = new Label("Create Deck");
-        title.setFont(Font.font("Serif", 38));
+        title.setFont(UiScale.headingFont(38));
         title.setTextFill(Color.web(PRIMARY_BLUE));
 
         Label nameLabel = new Label("Enter Deck Name");
-        nameLabel.setFont(Font.font("Serif", 17));
+        nameLabel.setFont(UiScale.bodyFont(17));
         nameLabel.setTextFill(Color.web(PRIMARY_BLUE));
 
         TextField nameField = new TextField();
         nameField.setPromptText("Deck name");
         nameField.setPrefHeight(40);
-        nameField.setStyle("-fx-background-color: white; -fx-border-color: " + PRIMARY_BLUE + "; -fx-border-width: 2; -fx-border-radius: 4; -fx-background-radius: 4; -fx-font-family: Serif; -fx-font-size: 14; -fx-padding: 5 10;");
+        nameField.setStyle("-fx-background-color: white; -fx-border-color: " + PRIMARY_BLUE + "; -fx-border-width: 2; -fx-border-radius: 4; -fx-background-radius: 4; -fx-font-family: 'Segoe UI'; -fx-font-size: 14; -fx-padding: 5 10;");
 
         Label descLabel = new Label("Enter Description");
-        descLabel.setFont(Font.font("Serif", 17));
+        descLabel.setFont(UiScale.bodyFont(17));
         descLabel.setTextFill(Color.web(PRIMARY_BLUE));
 
         TextArea descArea = new TextArea();
@@ -392,7 +412,7 @@ public class MyDeckPanel {
         descArea.setPrefRowCount(5);
         descArea.setPrefHeight(140);
         descArea.setWrapText(true);
-        descArea.setStyle("-fx-control-inner-background: white; -fx-border-color: " + PRIMARY_BLUE + "; -fx-border-width: 2; -fx-border-radius: 6; -fx-background-radius: 6; -fx-font-family: Serif; -fx-font-size: 16; -fx-padding: 8;");
+        descArea.setStyle("-fx-control-inner-background: white; -fx-border-color: " + PRIMARY_BLUE + "; -fx-border-width: 2; -fx-border-radius: 6; -fx-background-radius: 6; -fx-font-family: 'Segoe UI'; -fx-font-size: 24px; -fx-padding: 8;");
 
         Button createBtn = createDialogActionButton("CREATE");
 
@@ -462,17 +482,17 @@ public class MyDeckPanel {
         VBox.setMargin(topBar, new Insets(5, -30, 0, 0));
 
         Label title = new Label("Export Deck");
-        title.setFont(Font.font("Serif", 38));
+        title.setFont(UiScale.headingFont(38));
         title.setTextFill(Color.web(PRIMARY_BLUE));
 
         Label deckLabel = new Label("Choose Deck:");
-        deckLabel.setFont(Font.font("Serif", 17));
+        deckLabel.setFont(UiScale.bodyFont(20));
         deckLabel.setTextFill(Color.web(PRIMARY_BLUE));
 
         ComboBox<Deck> deckCombo = new ComboBox<>();
         deckCombo.getItems().addAll(allDecks);
         deckCombo.setMaxWidth(Double.MAX_VALUE);
-        deckCombo.setStyle("-fx-background-color: white; -fx-border-color: " + PRIMARY_BLUE + "; -fx-border-width: 2; -fx-border-radius: 4; -fx-background-radius: 4; -fx-font-family: Serif; -fx-font-size: 14; -fx-text-fill: " + PRIMARY_BLUE + ";");
+        deckCombo.setStyle("-fx-background-color: white; -fx-border-color: " + PRIMARY_BLUE + "; -fx-border-width: 2; -fx-border-radius: 4; -fx-background-radius: 4; -fx-font-family: 'Segoe UI'; -fx-font-size: 14; -fx-text-fill: " + PRIMARY_BLUE + ";");
         deckCombo.setCellFactory(list -> new ListCell<>() {
             @Override
             protected void updateItem(Deck item, boolean empty) {
@@ -490,13 +510,13 @@ public class MyDeckPanel {
         deckCombo.setValue(allDecks.get(0));
 
         Label formatLabel = new Label("File Type");
-        formatLabel.setFont(Font.font("Serif", 17));
+        formatLabel.setFont(UiScale.bodyFont(17));
         formatLabel.setTextFill(Color.web(PRIMARY_BLUE));
 
         ComboBox<String> formatCombo = new ComboBox<>();
         formatCombo.getItems().addAll("JSON", "CSV");
         formatCombo.setValue("JSON");
-        formatCombo.setStyle("-fx-background-color: white; -fx-border-color: " + PRIMARY_BLUE + "; -fx-border-width: 2; -fx-border-radius: 4; -fx-background-radius: 4; -fx-font-family: Serif; -fx-font-size: 14; -fx-text-fill: " + PRIMARY_BLUE + ";");
+        formatCombo.setStyle("-fx-background-color: white; -fx-border-color: " + PRIMARY_BLUE + "; -fx-border-width: 2; -fx-border-radius: 4; -fx-background-radius: 4; -fx-font-family: 'Segoe UI'; -fx-font-size: 14; -fx-text-fill: " + PRIMARY_BLUE + ";");
 
         HBox formatRow = new HBox(12, formatLabel, new Region(), formatCombo);
         formatRow.setAlignment(Pos.CENTER_LEFT);
@@ -562,10 +582,10 @@ public class MyDeckPanel {
         button.setPrefWidth(250);
         button.setPrefHeight(56);
         String normalStyle = "-fx-background-color: #c5cae9; -fx-text-fill: #2a548f; " +
-                "-fx-font-size: 17; -fx-font-family: Serif; -fx-background-radius: 28; " +
+                "-fx-font-size: 17; -fx-font-family: 'Segoe UI'; -fx-font-weight: bold; -fx-background-radius: 28; " +
                 "-fx-cursor: hand;";
         String hoverStyle = "-fx-background-color: #b3b9e0; -fx-text-fill: #2a548f; " +
-                "-fx-font-size: 17; -fx-font-family: Serif; -fx-background-radius: 28; " +
+                "-fx-font-size: 17; -fx-font-family: 'Segoe UI'; -fx-font-weight: bold; -fx-background-radius: 28; " +
                 "-fx-cursor: hand;";
         button.setStyle(normalStyle);
         button.setOnMouseEntered(e -> button.setStyle(hoverStyle));
@@ -610,3 +630,4 @@ public class MyDeckPanel {
         return topBar;
     }
 }
+
