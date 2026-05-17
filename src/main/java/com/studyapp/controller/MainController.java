@@ -3,6 +3,7 @@ package com.studyapp.controller;
 import java.io.File;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -310,6 +311,7 @@ public class MainController {
      * @throws CustomException if the deck does not exist or a card cannot be created
      */
     public void importCardsToExistingDeck(int deckID, List<CardJson> cards) throws CustomException {
+        validateNoImportDuplicates(deckID, cards);
         for (CardJson card : cards) {
             createFlashcard(deckID, card.getQuestion(), card.getAnswer(), card.getDifficulty());
         }
@@ -326,10 +328,43 @@ public class MainController {
      */
     public void importCardsToNewDeck(String deckName, String description, List<CardJson> cards)
             throws CustomException {
+        validateNoImportDuplicates(null, cards);
         Deck newDeck = createDeck(deckName, description);
         for (CardJson card : cards) {
             createFlashcard(newDeck.getDeckID(), card.getQuestion(), card.getAnswer(), card.getDifficulty());
         }
+    }
+
+    private void validateNoImportDuplicates(Integer targetDeckID, List<CardJson> cards) throws CustomException {
+        Set<String> seen = new HashSet<>();
+        for (CardJson card : cards) {
+            String key = cardKey(card.getQuestion(), card.getAnswer());
+            if (!seen.add(key)) {
+                throw new CustomException("Import contains duplicate cards. Remove repeated question/answer pairs before importing.");
+            }
+        }
+
+        if (targetDeckID == null) {
+            return;
+        }
+
+        Set<String> existingKeys = getFlashcardsByDeck(targetDeckID).stream()
+                .map(card -> cardKey(card.getQuestion(), card.getAnswer()))
+                .collect(Collectors.toSet());
+
+        for (CardJson card : cards) {
+            if (existingKeys.contains(cardKey(card.getQuestion(), card.getAnswer()))) {
+                throw new CustomException("One or more imported cards already exist in the database.");
+            }
+        }
+    }
+
+    private String cardKey(String question, String answer) {
+        return normalizeCardText(question) + "\n" + normalizeCardText(answer);
+    }
+
+    private String normalizeCardText(String value) {
+        return value == null ? "" : value.trim().replaceAll("\\s+", " ").toLowerCase();
     }
 
 }
