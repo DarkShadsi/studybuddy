@@ -201,7 +201,7 @@ public class DeckDetailPanel {
                 }
             });
 
-            buttonBox.getChildren().addAll(editBtn, saveBtn, spacer, deleteBtn, backBtn);
+            buttonBox.getChildren().addAll(editBtn, saveBtn, deleteBtn, spacer, backBtn);
         } else {
             backBtn.setOnAction(ev -> {
                 mainLayout.setLeft(originalSidebar);
@@ -292,11 +292,11 @@ public class DeckDetailPanel {
         studyBtn.setMaxWidth(Double.MAX_VALUE);
         studyBtn.setPrefHeight(UiScale.size(60));
         studyBtn.setFont(UiScale.buttonFont(24));
-        String studyDefault = "-fx-background-color: " + HEADER_BLUE + "; -fx-text-fill: white;"
-                + " -fx-border-color: " + PRIMARY_BLUE + "; -fx-border-radius: 8; -fx-background-radius: 8;"
+        String studyDefault = "-fx-background-color: #00bf63; -fx-text-fill: white;"
+                + " -fx-border-color: #00bf63; -fx-border-radius: 8; -fx-background-radius: 8;"
                 + " -fx-padding: 12 15; -fx-cursor: hand; -fx-font-weight: bold;";
-        String studyHover = "-fx-background-color: " + PRIMARY_BLUE + "; -fx-text-fill: white;"
-                + " -fx-border-color: " + PRIMARY_BLUE + "; -fx-border-radius: 8; -fx-background-radius: 8;"
+        String studyHover = "-fx-background-color: #b3ffae; -fx-text-fill: white;"
+                + " -fx-border-color: #00bf63; -fx-border-radius: 8; -fx-background-radius: 8;"
                 + " -fx-padding: 12 15; -fx-cursor: hand; -fx-font-weight: bold;";
         studyBtn.setStyle(studyDefault);
         studyBtn.setOnMouseEntered(e -> studyBtn.setStyle(studyHover));
@@ -573,4 +573,3 @@ public class DeckDetailPanel {
         return trimmed.isEmpty() ? null : trimmed;
     }
 }
-
