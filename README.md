@@ -34,8 +34,10 @@ Study Assistant is a JavaFX desktop application for creating and managing flashc
 - Type-in study mode with intelligent answer checking
 - Smart answer checker using Levenshtein distance, Jaro-Winkler similarity, cosine n-gram similarity, and WordNet synonym/antonym detection
 - Per-card result feedback: **CORRECT**, **CLOSE**, or **INCORRECT**, with the correct answer shown when a typo is accepted as correct
-- Import and export decks as **JSON** or **CSV**
-- Paginated card and deck lists (5 items per page)
+- Import cards from a **JSON** or **CSV** file into any existing or new deck, with a live preview and per-card selection
+- Export decks as **JSON** or **CSV**
+- Search and sort for both deck and card lists
+- Paginated deck and card lists (5 items per page)
 
 ---
 
@@ -120,17 +122,19 @@ Navigate using the **sidebar** on the left: **Dashboard**, **My Decks**, **All C
 
 Access via the **My Decks** sidebar button.
 
-Displays all your decks in a paginated list (5 per page). Each deck row shows its name and description.
+Displays all your decks in a paginated list (5 per page). Each deck row shows its name, card count, and progress percentage.
 
-**Actions:**
+**Toolbar:**
 
-| Button   | Action                                                                                        |
-|----------|-----------------------------------------------------------------------------------------------|
-| New      | Opens a dialog to create a new deck (name required, description optional)                    |
-| Import   | Import one or more decks from a JSON or CSV file (see [Import & Export](#8-import--export)) |
-| Export   | Select a deck from a dropdown and export it to a JSON or CSV file                            |
-| Open     | Opens the [Deck Detail](#5-deck-detail) view for the selected deck                           |
-| Previous / Next | Navigate between pages                                                                |
+| Control         | Action                                                                                       |
+|-----------------|----------------------------------------------------------------------------------------------|
+| New             | Opens a dialog to create a new deck (name required, description optional)                   |
+| Import          | Opens the Import Cards dialog (see [Import & Export](#8-import--export))                   |
+| Export          | Opens a dialog to select a deck and format, then saves to a file                            |
+| Search          | Filters the deck list by name or description as you type                                    |
+| Sort by         | Sorts the list by **Newest** (default), **Oldest**, or **Name**                             |
+
+Each deck row has an **OPEN** button that opens the [Deck Detail](#5-deck-detail) view. Use **Previous / Next** to navigate between pages.
 
 **Creating a deck:**
 1. Click **New**.
@@ -150,13 +154,15 @@ Access via the **All Cards** sidebar button.
 
 Displays all flashcards across every deck in a paginated list. Each card row shows the question, answer, deck name, and difficulty.
 
-**Actions:**
+**Toolbar:**
 
-| Button | Action                                                             |
-|--------|--------------------------------------------------------------------|
-| New    | Opens a dialog to create a new flashcard (must select a deck)      |
-| Open   | Opens the [Card Detail](#6-card-detail) view for the selected card |
-| Previous / Next | Navigate between pages                                      |
+| Control  | Action                                                              |
+|----------|---------------------------------------------------------------------|
+| New      | Opens a dialog to create a new flashcard (must select a deck)       |
+| Search   | Filters the card list by question or answer as you type             |
+| Sort by  | Sorts the list by **Newest** (default), **Oldest**, or **Question** |
+
+Each card row has an **OPEN** button that opens the [Card Detail](#6-card-detail) view. Use **Previous / Next** to navigate between pages.
 
 **Creating a flashcard:**
 1. Click **New**.
@@ -245,15 +251,21 @@ This allows minor typos, synonym answers, and case/punctuation differences to be
 Accessed via the **Import** and **Export** buttons in My Decks.
 
 **Import:**
-1. Click **Import** and choose a format: **JSON** or **CSV**.
-2. A file chooser opens - select your file.
-3. The app reads the file, creates any new decks and cards found, and reports how many decks were imported.
-4. Decks with a name that already exists in the app are **skipped**.
+1. Click **Import** to open the full-screen **Import Cards** dialog.
+2. In the **left panel**, choose where the imported cards will go:
+   - **Add to Existing Deck** — select a deck from the dropdown.
+   - **Add to New Deck** — enter a deck name (required) and an optional description.
+3. Click **IMPORT FROM CSV** or **IMPORT FROM JSON** to open a file chooser and load a file.
+4. The **right panel** shows a preview table with columns: checkbox, **QUESTION**, **ANSWER**, and **DIFFICULTY**.
+   - Cards whose difficulty was not recognised in the file show a `--Select Difficulty--` dropdown that must be filled before importing.
+   - Toggle **EDIT PREVIEW** to edit any card's question, answer, or difficulty inline before saving.
+5. Select the cards to import using the per-row checkboxes or the **SELECT ALL** checkbox.
+6. Click **IMPORT TO SYSTEM**. A success message reports how many cards were imported, and the view returns to My Decks.
 
 **Export:**
-1. Click **Export** and choose a format: **JSON** or **CSV**.
-2. Select the deck to export from the dropdown.
-3. A save dialog opens - choose a destination.
+1. Click **Export**.
+2. Select the deck to export from the dropdown and choose a file type: **JSON** or **CSV**.
+3. A save dialog opens — choose a destination and file name.
 4. The file is written with all cards belonging to that deck.
 
 ---
@@ -264,7 +276,28 @@ Accessed via the **Import** and **Export** buttons in My Decks.
 
 Two formats are accepted:
 
-**Single deck:**
+**Flat card array** (default export format):
+```json
+[
+  {
+    "question": "What is the question?",
+    "answer": "The answer goes here.",
+    "difficulty": "Easy"
+  },
+  {
+    "question": "Another question?",
+    "answer": "Another answer.",
+    "difficulty": "Medium"
+  },
+  {
+    "question": "A harder question?",
+    "answer": "A harder answer.",
+    "difficulty": "Hard"
+  }
+]
+```
+
+**Deck wrapper object** (also accepted on import):
 ```json
 {
   "deck_name": "Your Deck Name",
@@ -280,71 +313,41 @@ Two formats are accepted:
       "question": "Another question?",
       "answer": "Another answer.",
       "difficulty": "Medium"
-    },
-    {
-      "question": "A harder question?",
-      "answer": "A harder answer.",
-      "difficulty": "Hard"
-    }
-  ]
-}
-```
-
-**Multiple decks (array wrapper):**
-```json
-{
-  "decks": [
-    {
-      "deck_name": "First Deck",
-      "description": "Description for the first deck",
-      "cards": [
-        {
-          "question": "Question 1",
-          "answer": "Answer 1",
-          "difficulty": "Easy"
-        }
-      ]
-    },
-    {
-      "deck_name": "Second Deck",
-      "description": "Description for the second deck",
-      "cards": [
-        {
-          "question": "Question A",
-          "answer": "Answer A",
-          "difficulty": "Hard"
-        }
-      ]
     }
   ]
 }
 ```
 
 > **Notes:**
-> - `difficulty` must be `"Easy"`, `"Medium"`, or `"Hard"` (case-insensitive). Omitting it defaults to `"Medium"`.
-> - `description` and `exported_at` are optional.
+> - `difficulty` must be `"Easy"`, `"Medium"`, or `"Hard"` (case-insensitive). Unrecognised or missing values show as `--Select Difficulty--` in the preview and must be assigned before importing.
+> - `description` and `exported_at` are optional; when present in a deck wrapper, the import dialog pre-fills the deck name and description fields.
 > - Cards with a blank `question` or `answer` are skipped.
-> - Decks whose name already exists in the app are skipped.
+> - The destination deck is always chosen in the Import Cards dialog, regardless of the `deck_name` field in the file.
 
 ---
 
 ### CSV Template
 
+**With difficulty:**
 ```csv
-deck_name,description,question,answer,difficulty
-My Deck,Optional description,What is the question?,The answer goes here.,Easy
-My Deck,Optional description,Another question?,Another answer.,Medium
-Second Deck,Another deck,What is 2 + 2?,4,Easy
-Second Deck,Another deck,What is the capital of France?,Paris,Hard
+question,answer,difficulty
+What is the question?,The answer goes here.,Easy
+Another question?,Another answer.,Medium
+A harder question?,A harder answer.,Hard
+```
+
+**Without difficulty:**
+```csv
+question,answer
+What is the question?,The answer goes here.
+Another question?,Another answer.
 ```
 
 > **Notes:**
-> - The header row `deck_name,description,question,answer,difficulty` is **required** exactly as shown.
-> - Multiple rows with the same `deck_name` are grouped into one deck.
-> - The `description` only needs to appear once per deck name; all non-blank descriptions for the same deck must match.
-> - `difficulty` must be `Easy`, `Medium`, or `Hard` (case-insensitive). Omitting or leaving blank defaults to `Medium`.
+> - The header row must be exactly `question,answer,difficulty` or `question,answer`.
+> - `difficulty` must be `Easy`, `Medium`, or `Hard` (case-insensitive). Unrecognised or missing values show as `--Select Difficulty--` in the preview and must be assigned before importing.
 > - Rows with a blank `question` or `answer` are skipped.
-> - Decks whose name already exists in the app are skipped entirely.
+> - The destination deck is always chosen in the Import Cards dialog; there are no `deck_name` or `description` columns in the CSV.
 
 ---
 
@@ -356,7 +359,11 @@ studybuddy/
 |-- README.md
 |-- sample-data/
 |   |-- sample-deck.json
-|   `-- sample-data2.json
+|   |-- sample-data2.json
+|   |-- sample-with-difficulty.json
+|   |-- sample-no-difficulty.json
+|   |-- sample-with-difficulty.csv
+|   `-- sample-no-difficulty.csv
 `-- src/main/
     |-- java/com/studyapp/
     |   |-- Launcher.java              # Executable JAR entry point; delegates to Main
@@ -392,6 +399,7 @@ studybuddy/
     |   |   |-- CardJson.java
     |   |   |-- CsvImportExportService.java
     |   |   |-- DeckJson.java
+    |   |   |-- ImportPreview.java
     |   |   |-- JsonImportExportService.java
     |   |   `-- SaveService.java
     |   `-- view/
@@ -401,6 +409,7 @@ studybuddy/
     |       |-- DashboardPanel.java
     |       |-- DeckDetailPanel.java
     |       |-- ExitPanel.java
+    |       |-- ImportDialogPanel.java
     |       |-- MainFrame.java
     |       |-- MyDeckPanel.java
     |       |-- QuestionPanel.java

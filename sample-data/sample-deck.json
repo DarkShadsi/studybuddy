@@ -4,16 +4,16 @@
   "exported_at": "2025-04-10T20:00:00",
   "cards": [
     {
-      "question": "What does JDBC stand for?",
-      "answer": "Java Database Connectivity"
+      "question": "Which Java API connects Java applications to relational databases?",
+      "answer": "JDBC"
     },
     {
-      "question": "What is normalization?",
-      "answer": "The process of organizing a database to reduce redundancy"
+      "question": "What process organizes a database to reduce redundancy?",
+      "answer": "Normalization"
     },
     {
-      "question": "What is a Primary Key?",
-      "answer": "A unique identifier for each record in a table"
+      "question": "What uniquely identifies each record in a table?",
+      "answer": "Primary key"
     }
   ]
 }

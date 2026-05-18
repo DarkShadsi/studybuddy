@@ -1,0 +1,9 @@
+question,answer,difficulty
+"Which database constraint references the primary key of another table?","Foreign key",Easy
+"Which SQL operation combines rows from two or more tables using a related column?","JOIN",Medium
+"Which database structure speeds up retrieval but uses extra storage?","Index",Hard
+"What do you call a sequence of database operations treated as one unit of work?","Transaction",Hard
+"Which transaction property acronym means Atomicity, Consistency, Isolation, and Durability?","ACID",Medium
+"What is a virtual table based on the result of a SELECT query?","View",Easy
+"What is the process of organizing tables to reduce redundancy and improve integrity?","Normalization",Medium
+"What is a named, precompiled set of SQL statements stored in the database?","Stored procedure",Hard
