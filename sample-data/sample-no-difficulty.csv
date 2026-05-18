@@ -1,0 +1,9 @@
+question,answer
+"What is the numerical label assigned to a network device for identification and location?","IP address"
+"Which system translates human-readable domain names into IP addresses?","DNS"
+"Which transport protocol is connection-oriented and reliable?","TCP"
+"Which transport protocol is connectionless and faster but unreliable?","UDP"
+"What divides an IP address into network and host portions?","Subnet mask"
+"Which protocol is the foundation of data communication on the web?","HTTP"
+"What is the unique hardware identifier assigned to a network interface card?","MAC address"
+"What monitors and controls incoming and outgoing network traffic?","Firewall"

@@ -1,0 +1,30 @@
+[
+  {
+    "question": "Which linear data structure follows Last-In, First-Out order?",
+    "answer": "Stack"
+  },
+  {
+    "question": "Which linear data structure follows First-In, First-Out order?",
+    "answer": "Queue"
+  },
+  {
+    "question": "Which data structure stores nodes that point to the next node?",
+    "answer": "Linked list"
+  },
+  {
+    "question": "Which tree structure has at most two children per node?",
+    "answer": "Binary tree"
+  },
+  {
+    "question": "What is the time complexity of binary search on a sorted array?",
+    "answer": "O(log n)"
+  },
+  {
+    "question": "Which structure maps keys to values using a hash function?",
+    "answer": "Hash table"
+  },
+  {
+    "question": "Which structure represents relationships using vertices and edges?",
+    "answer": "Graph"
+  }
+]

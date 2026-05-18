@@ -3,6 +3,7 @@ package com.studyapp.controller;
 import java.io.File;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -13,7 +14,9 @@ import com.studyapp.model.CardReview;
 import com.studyapp.model.Deck;
 import com.studyapp.model.Flashcard;
 import com.studyapp.model.StudySession;
+import com.studyapp.service.CardJson;
 import com.studyapp.service.CsvImportExportService;
+import com.studyapp.service.ImportPreview;
 import com.studyapp.service.JsonImportExportService;
 import com.studyapp.service.SaveService;
 
@@ -250,14 +253,6 @@ public class MainController {
     }
 
     // --------- JSON IMPORT / EXPORT --------------
-    public int importFromJson(File file) throws CustomException {
-        return new JsonImportExportService().importFromFile(file, this);
-    }
-
-    public int importFromCsv(File file) throws CustomException {
-        return new CsvImportExportService().importFromFile(file, this);
-    }
-
     public void exportDeckToJson(int deckID, File file) throws CustomException {
         Deck deck = findDeck(deckID);
         List<Flashcard> cards = getFlashcardsByDeck(deckID);
@@ -268,6 +263,108 @@ public class MainController {
         Deck deck = findDeck(deckID);
         List<Flashcard> cards = getFlashcardsByDeck(deckID);
         new CsvImportExportService().exportDeckToFile(deck, cards, file);
+    }
+
+        // --------- CARD PREVIEW (for ImportDialogPanel) ---------------
+
+    /**
+     * Parses a JSON file and returns all card data as a flat preview list.
+     * No Deck or Flashcard objects are created; the list is for UI preview only.
+     *
+     * @param  file  the JSON file to parse
+     * @return list of card DTOs (difficulty is {@code null} when not set or unrecognised)
+     * @throws CustomException on read or parse errors
+     */
+    public List<CardJson> previewJsonCards(File file) throws CustomException {
+        return new JsonImportExportService().previewCards(file);
+    }
+
+    /**
+     * Parses a JSON file and returns cards plus optional deck metadata for import preview.
+     *
+     * @param file JSON file containing either a card array or a deck object with cards
+     * @return preview data for the import dialog
+     * @throws CustomException on read or parse errors
+     */
+    public ImportPreview previewJsonImport(File file) throws CustomException {
+        return new JsonImportExportService().previewImport(file);
+    }
+
+    /**
+     * Parses a CSV file and returns all card data as a flat preview list.
+     * No Deck or Flashcard objects are created; the list is for UI preview only.
+     *
+     * @param  file  the CSV file to parse
+     * @return list of card DTOs (difficulty is {@code null} when not set or unrecognised)
+     * @throws CustomException on read or parse errors
+     */
+    public List<CardJson> previewCsvCards(File file) throws CustomException {
+        return new CsvImportExportService().previewCards(file);
+    }
+
+    /**
+     * Adds a list of cards to an existing deck.
+     * Objects are created in memory only — call {@link #saveChanges()} to persist.
+     *
+     * @param deckID the ID of the target deck
+     * @param cards  cards to import; each must have a non-null difficulty
+     * @throws CustomException if the deck does not exist or a card cannot be created
+     */
+    public void importCardsToExistingDeck(int deckID, List<CardJson> cards) throws CustomException {
+        validateNoImportDuplicates(deckID, cards);
+        for (CardJson card : cards) {
+            createFlashcard(deckID, card.getQuestion(), card.getAnswer(), card.getDifficulty());
+        }
+    }
+
+    /**
+     * Creates a new deck and imports a list of cards into it.
+     * Objects are created in memory only — call {@link #saveChanges()} to persist.
+     *
+     * @param deckName    name for the new deck (must not be blank)
+     * @param description optional description for the new deck (may be blank)
+     * @param cards       cards to import; each must have a non-null difficulty
+     * @throws CustomException if the deck or any card cannot be created
+     */
+    public void importCardsToNewDeck(String deckName, String description, List<CardJson> cards)
+            throws CustomException {
+        validateNoImportDuplicates(null, cards);
+        Deck newDeck = createDeck(deckName, description);
+        for (CardJson card : cards) {
+            createFlashcard(newDeck.getDeckID(), card.getQuestion(), card.getAnswer(), card.getDifficulty());
+        }
+    }
+
+    private void validateNoImportDuplicates(Integer targetDeckID, List<CardJson> cards) throws CustomException {
+        Set<String> seen = new HashSet<>();
+        for (CardJson card : cards) {
+            String key = cardKey(card.getQuestion(), card.getAnswer());
+            if (!seen.add(key)) {
+                throw new CustomException("Import contains duplicate cards. Remove repeated question/answer pairs before importing.");
+            }
+        }
+
+        if (targetDeckID == null) {
+            return;
+        }
+
+        Set<String> existingKeys = getFlashcardsByDeck(targetDeckID).stream()
+                .map(card -> cardKey(card.getQuestion(), card.getAnswer()))
+                .collect(Collectors.toSet());
+
+        for (CardJson card : cards) {
+            if (existingKeys.contains(cardKey(card.getQuestion(), card.getAnswer()))) {
+                throw new CustomException("One or more imported cards already exist in the database.");
+            }
+        }
+    }
+
+    private String cardKey(String question, String answer) {
+        return normalizeCardText(question) + "\n" + normalizeCardText(answer);
+    }
+
+    private String normalizeCardText(String value) {
+        return value == null ? "" : value.trim().replaceAll("\\s+", " ").toLowerCase();
     }
 
 }

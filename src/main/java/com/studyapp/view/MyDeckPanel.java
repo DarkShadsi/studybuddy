@@ -12,8 +12,6 @@ import com.studyapp.model.Deck;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
@@ -91,61 +89,9 @@ public class MyDeckPanel {
 
         newBtn.setOnAction(e -> showCreateDeckDialog(mainLayout, mc));
 
-        importBtn.setOnAction(e -> {
-            String format = showImportFormatDialog(mainLayout);
-            if (format == null) {
-                return;
-            }
-
-            FileChooser fc = new FileChooser();
-            if ("CSV".equals(format)) {
-                fc.setTitle("Import Decks from CSV");
-                fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV Files", "*.csv"));
-            } else {
-                fc.setTitle("Import Decks from JSON");
-                fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON Files", "*.json"));
-            }
-
-            File file = fc.showOpenDialog(mainLayout.getScene().getWindow());
-
-            if (file != null) {
-                try {
-                    int count = "CSV".equals(format) ? mc.importFromCsv(file) : mc.importFromJson(file);
-                    if (count > 0) {
-                        MainFrame.runSaveTask(
-                                mainLayout.getScene().getWindow(),
-                                mc,
-                                "Saving imported decks...",
-                                () -> mainLayout.setCenter(MyDeckPanel.create(
-                                        mainLayout,
-                                        count + " deck(s) imported and saved successfully!",
-                                        "#22c55e",
-                                        mc)),
-                                errorMessage -> {
-                                    MainFrame.showErrorDialog("Import autosave failed: " + errorMessage);
-                                    mainLayout.setCenter(MyDeckPanel.create(
-                                            mainLayout,
-                                            count + " deck(s) imported, but autosave failed. Changes remain unsaved.",
-                                            "#d97706",
-                                            mc));
-                                }
-                        );
-                    } else {
-                        mainLayout.setCenter(MyDeckPanel.create(
-                                mainLayout,
-                                "No new decks were imported. The selected file may contain duplicate deck names or no valid decks.",
-                                "#d97706",
-                                mc));
-                    }
-                } catch (CustomException ex) {
-                    Alert alert = new Alert(AlertType.ERROR);
-                    alert.setTitle("Import Error");
-                    alert.setHeaderText("Failed to import decks");
-                    alert.setContentText(ex.getMessage());
-                    alert.showAndWait();
-                }
-            }
-        });
+                // Opens the full Import Questions dialog, which handles file selection,
+        // preview, deck assignment, and post-import save/navigation internally.
+        importBtn.setOnAction(e -> ImportDialogPanel.show(mainLayout, mc));
 
         exportBtn.setOnAction(e -> {
             List<Deck> allDecks = mc.allDecks();

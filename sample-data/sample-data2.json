@@ -5,28 +5,28 @@
       "description": "Core Python syntax and concepts for beginners",
       "cards": [
         {
-          "question": "What is a variable in Python?",
-          "answer": "A named reference to a value stored in memory (e.g., x = 5).",
+          "question": "What is a named reference to a value stored in memory?",
+          "answer": "Variable",
           "difficulty": "Easy"
         },
         {
-          "question": "What is the difference between a list and a tuple?",
-          "answer": "Lists are mutable (can change); tuples are immutable (cannot change).",
+          "question": "Which Python collection is mutable and ordered?",
+          "answer": "List",
           "difficulty": "Easy"
         },
         {
-          "question": "What does the `len()` function do?",
-          "answer": "Returns the number of items in a sequence or collection.",
+          "question": "Which Python collection is immutable and ordered?",
+          "answer": "Tuple",
           "difficulty": "Easy"
         },
         {
-          "question": "What is a Python dictionary?",
-          "answer": "A key-value mapping type (e.g., {\"a\": 1}) where keys are unique.",
-          "difficulty": "Medium"
+          "question": "Which built-in function returns the number of items in a collection?",
+          "answer": "len()",
+          "difficulty": "Easy"
         },
         {
-          "question": "What is list comprehension?",
-          "answer": "A concise way to build lists, e.g., [x*x for x in nums if x > 0].",
+          "question": "Which Python type stores unique keys mapped to values?",
+          "answer": "Dictionary",
           "difficulty": "Medium"
         }
       ]
@@ -36,28 +36,28 @@
       "description": "Essential HTML/CSS/HTTP concepts for web apps",
       "cards": [
         {
-          "question": "What does HTML stand for?",
-          "answer": "HyperText Markup Language.",
+          "question": "Which markup language structures web page content?",
+          "answer": "HTML",
           "difficulty": "Easy"
         },
         {
-          "question": "What is the purpose of CSS?",
-          "answer": "To control the presentation (style/layout) of HTML content.",
+          "question": "Which language controls the style and layout of HTML content?",
+          "answer": "CSS",
           "difficulty": "Easy"
         },
         {
-          "question": "What is an HTTP status code 404?",
-          "answer": "It indicates the requested resource was not found on the server.",
+          "question": "Which HTTP status code means the resource was not found?",
+          "answer": "404",
           "difficulty": "Easy"
         },
         {
-          "question": "What is the difference between GET and POST?",
-          "answer": "GET retrieves data (typically no body); POST sends data to create/process (typically with a request body).",
+          "question": "Which HTTP method is commonly used to retrieve data?",
+          "answer": "GET",
           "difficulty": "Medium"
         },
         {
-          "question": "What is CORS?",
-          "answer": "Cross-Origin Resource Sharing; a browser security policy controlling cross-origin requests and how servers allow them.",
+          "question": "Which browser security mechanism controls cross-origin requests?",
+          "answer": "CORS",
           "difficulty": "Hard"
         }
       ]
@@ -67,28 +67,28 @@
       "description": "High-yield definitions and tradeoffs for common data structures",
       "cards": [
         {
-          "question": "What is a stack?",
-          "answer": "A LIFO (Last-In, First-Out) data structure where the last item added is the first removed.",
+          "question": "Which data structure removes the most recently added item first?",
+          "answer": "Stack",
           "difficulty": "Easy"
         },
         {
-          "question": "What is a queue?",
-          "answer": "A FIFO (First-In, First-Out) data structure where the first item added is the first removed.",
+          "question": "Which data structure removes the earliest added item first?",
+          "answer": "Queue",
           "difficulty": "Easy"
         },
         {
-          "question": "What is a linked list?",
-          "answer": "A linear data structure made of nodes where each node points to the next (and sometimes previous) node.",
+          "question": "Which data structure is made of nodes connected by references?",
+          "answer": "Linked list",
           "difficulty": "Medium"
         },
         {
-          "question": "What is the average time complexity of binary search on a sorted array?",
-          "answer": "O(log n).",
+          "question": "What is binary search complexity on a sorted array?",
+          "answer": "O(log n)",
           "difficulty": "Medium"
         },
         {
-          "question": "What is a hash table collision?",
-          "answer": "When two different keys map to the same hash index; it must be handled (e.g., chaining or open addressing).",
+          "question": "What occurs when two keys map to the same hash index?",
+          "answer": "Collision",
           "difficulty": "Hard"
         }
       ]
@@ -98,28 +98,28 @@
       "description": "Relational database fundamentals for studying and review",
       "cards": [
         {
-          "question": "What is a foreign key?",
-          "answer": "A field (or set of fields) in one table that references a primary key in another table.",
+          "question": "Which key references a primary key in another table?",
+          "answer": "Foreign key",
           "difficulty": "Easy"
         },
         {
-          "question": "What does ACID stand for in databases?",
-          "answer": "Atomicity, Consistency, Isolation, Durability.",
+          "question": "Which acronym describes reliable transaction properties?",
+          "answer": "ACID",
           "difficulty": "Medium"
         },
         {
-          "question": "What is a transaction?",
-          "answer": "A sequence of database operations treated as a single unit of work that either fully succeeds or fully fails.",
+          "question": "What is a single logical unit of database work?",
+          "answer": "Transaction",
           "difficulty": "Medium"
         },
         {
-          "question": "What is an index in a database?",
-          "answer": "A data structure that speeds up reads (lookups/sorts) at the cost of extra storage and slower writes.",
+          "question": "What speeds up database reads at the cost of storage and slower writes?",
+          "answer": "Index",
           "difficulty": "Medium"
         },
         {
-          "question": "What is the difference between INNER JOIN and LEFT JOIN?",
-          "answer": "INNER JOIN returns only matching rows; LEFT JOIN returns all left-table rows plus matched right-table rows (or NULLs if no match).",
+          "question": "Which join returns all rows from the left table plus matching right-table rows?",
+          "answer": "LEFT JOIN",
           "difficulty": "Hard"
         }
       ]
@@ -129,28 +129,28 @@
       "description": "Commands and concepts to collaborate effectively using Git",
       "cards": [
         {
-          "question": "What is Git?",
-          "answer": "A distributed version control system used to track changes and collaborate on code.",
+          "question": "Which distributed version control system tracks code changes?",
+          "answer": "Git",
           "difficulty": "Easy"
         },
         {
-          "question": "What does `git commit` do?",
-          "answer": "Creates a new snapshot (commit) of staged changes in the repository history.",
+          "question": "Which Git command creates a snapshot of staged changes?",
+          "answer": "git commit",
           "difficulty": "Easy"
         },
         {
-          "question": "What is a branch in Git?",
-          "answer": "A movable pointer to a series of commits, used to develop features or fixes independently.",
+          "question": "What is a movable pointer to a series of commits?",
+          "answer": "Branch",
           "difficulty": "Medium"
         },
         {
-          "question": "What is the difference between `git merge` and `git rebase`?",
-          "answer": "Merge combines histories with a merge commit (or fast-forward); rebase rewrites commits to apply them on top of another base commit.",
+          "question": "Which Git operation rewrites commits onto another base?",
+          "answer": "Rebase",
           "difficulty": "Hard"
         },
         {
-          "question": "What is a pull request (PR) commonly used for?",
-          "answer": "Proposing changes for review and discussion before merging them into a shared branch.",
+          "question": "What is commonly used to propose changes for review before merging?",
+          "answer": "Pull request",
           "difficulty": "Medium"
         }
       ]
