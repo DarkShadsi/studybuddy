@@ -200,6 +200,16 @@ public class FlashcardController {
             throw new CustomException("Answer field cannot be empty.");
         }
 
+        // Prevent duplicate cards in the same deck. Difficulty is intentionally ignored:
+        // the same question/answer pair should not be imported or created repeatedly.
+        if (flashcards.stream().anyMatch(i -> i != flashcard
+                && i.getCardID() != flashcard.getCardID()
+                && i.getDeckID() == flashcard.getDeckID()
+                && normalizedText(i.getQuestion()).equals(normalizedText(flashcard.getQuestion()))
+                && normalizedText(i.getAnswer()).equals(normalizedText(flashcard.getAnswer())))) {
+            throw new CustomException("A matching card already exists in this deck.");
+        }
+
         //CHECK IF DIFFICULTY IS VALID
         if(flashcard.getDifficulty() == null || flashcard.getDifficulty().trim().isEmpty()) {
             throw new CustomException("Difficulty field cannot be empty.");
@@ -208,5 +218,9 @@ public class FlashcardController {
                 !flashcard.getDifficulty().equalsIgnoreCase("Hard")){
             throw new CustomException("Difficulty must be either Easy, Medium, or Hard.");
         }
+    }
+
+    private String normalizedText(String value) {
+        return value == null ? "" : value.trim().replaceAll("\\s+", " ").toLowerCase();
     }
 }

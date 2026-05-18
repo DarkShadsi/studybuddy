@@ -1,42 +1,42 @@
 [
   {
-    "question": "What is a process?",
-    "answer": "A program in execution, including its code, data, and state.",
+    "question": "What is a program in execution, including its code, data, and state?",
+    "answer": "Process",
     "difficulty": "Easy"
   },
   {
-    "question": "What is the difference between a process and a thread?",
-    "answer": "A process has its own memory space; threads share memory within the same process.",
+    "question": "What is the smaller execution unit that shares memory inside a process?",
+    "answer": "Thread",
     "difficulty": "Medium"
   },
   {
-    "question": "What is deadlock?",
-    "answer": "A state where two or more processes are waiting for each other to release resources indefinitely.",
+    "question": "What is the condition where processes wait forever for each other's resources?",
+    "answer": "Deadlock",
     "difficulty": "Hard"
   },
   {
-    "question": "What is virtual memory?",
-    "answer": "An abstraction that gives each process the illusion of a large, private address space.",
-    "difficulty": "Difficult"
+    "question": "What gives each process the illusion of a large private address space?",
+    "answer": "Virtual memory",
+    "difficulty": "Medium"
   },
   {
-    "question": "What is a context switch?",
-    "answer": "The OS saving the state of a running process and loading the state of another.",
-    "difficulty": ""
+    "question": "What occurs when the OS saves one process state and loads another?",
+    "answer": "Context switch",
+    "difficulty": "Medium"
   },
   {
-    "question": "What is paging?",
-    "answer": "Dividing memory into fixed-size pages to eliminate external fragmentation.",
-    "difficulty": "medium"
+    "question": "What memory technique divides memory into fixed-size pages?",
+    "answer": "Paging",
+    "difficulty": "Medium"
   },
   {
-    "question": "What is the purpose of the scheduler?",
-    "answer": "To decide which process runs on the CPU at any given time.",
-    "difficulty": "N/A"
+    "question": "Which OS component decides which process runs on the CPU next?",
+    "answer": "Scheduler",
+    "difficulty": "Easy"
   },
   {
-    "question": "What is a semaphore?",
-    "answer": "A synchronization primitive used to control access to shared resources.",
+    "question": "Which synchronization primitive controls access to shared resources?",
+    "answer": "Semaphore",
     "difficulty": "Hard"
   }
 ]

@@ -10,16 +10,20 @@ import com.studyapp.controller.MainController;
 import com.studyapp.model.Deck;
 import com.studyapp.service.CardJson;
 import com.studyapp.service.ImportPreview;
+import com.studyapp.util.UiScale;
 
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
@@ -31,6 +35,7 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.OverrunStyle;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.cell.CheckBoxTableCell;
@@ -40,11 +45,11 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.stage.Window;
 
 /**
  * Full-screen modal dialog for importing flashcard questions from a JSON or CSV file.
@@ -92,6 +97,7 @@ public class ImportDialogPanel {
         private final BooleanProperty selected   = new SimpleBooleanProperty(false);
         private final StringProperty  question   = new SimpleStringProperty("");
         private final StringProperty  answer     = new SimpleStringProperty("");
+        private final DoubleProperty  previewHeight = new SimpleDoubleProperty(UiScale.size(64));
         /**
          * {@code null}  → "--Select Difficulty--" (user must choose before importing).
          * {@code "Easy"} / {@code "Medium"} / {@code "Hard"}  → pre-filled from file.
@@ -128,6 +134,7 @@ public class ImportDialogPanel {
         public StringProperty  questionProperty()   { return question; }
         public StringProperty  answerProperty()     { return answer; }
         public StringProperty  difficultyProperty() { return difficulty; }
+        public DoubleProperty  previewHeightProperty() { return previewHeight; }
 
         public boolean isSelected()    { return selected.get(); }
         public String  getQuestion()   { return question.get(); }
@@ -149,41 +156,57 @@ public class ImportDialogPanel {
      */
     public static void show(BorderPane mainLayout, MainController mc) {
 
-        Stage dialog = new Stage();
-        dialog.initModality(Modality.APPLICATION_MODAL);
-        dialog.initOwner(mainLayout.getScene().getWindow());
-        dialog.setTitle("Import Questions");
+        Scene appScene = mainLayout.getScene();
+        Parent previousRoot = appScene.getRoot();
+        Window ownerWindow = appScene.getWindow();
+
+        StackPane modalRoot = new StackPane();
+        StackPane overlay = new StackPane();
+        overlay.setStyle("-fx-background-color: rgba(15, 23, 42, 0.28);");
+        overlay.setPickOnBounds(true);
+        Runnable closeOverlay = () -> {
+            modalRoot.getChildren().remove(previousRoot);
+            appScene.setRoot(previousRoot);
+        };
 
         /* Shared list backing the preview TableView. */
         ObservableList<CardRowData> cardRows = FXCollections.observableArrayList();
 
         // ── root ──────────────────────────────────────────────────────
         VBox root = new VBox(0);
-        root.setStyle("-fx-background-color: " + PAGE_BG + ";");
+        root.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+        root.setStyle(
+            "-fx-background-color: " + PAGE_BG + "; " +
+            "-fx-background-radius: 12; " +
+            "-fx-border-color: " + PRIMARY_BLUE + "; " +
+            "-fx-border-width: 2; " +
+            "-fx-border-radius: 12;"
+        );
+        StackPane.setMargin(root, UiScale.insets(24));
 
         // ── title header bar ──────────────────────────────────────────
-        Label titleLbl = new Label("IMPORT QUESTIONS");
-        titleLbl.setFont(Font.font("Serif", 28));
+        Label titleLbl = new Label("IMPORT CARDS");
+        titleLbl.setFont(UiScale.titleFont(52));
         titleLbl.setTextFill(Color.WHITE);
         titleLbl.setMaxWidth(Double.MAX_VALUE);
         titleLbl.setAlignment(Pos.CENTER);
-        titleLbl.setPadding(new Insets(16, 20, 16, 20));
-        titleLbl.setStyle("-fx-background-color: " + HEADER_DARK + ";");
+        titleLbl.setPadding(UiScale.insets(14, 20, 14, 20));
+        titleLbl.setStyle("-fx-background-color: " + HEADER_DARK + "; -fx-background-radius: 10 10 0 0;");
 
         // ── body: left panel | right panel ────────────────────────────
-        HBox body = new HBox(20);
-        body.setPadding(new Insets(20, 24, 20, 24));
+        HBox body = new HBox(UiScale.size(20));
+        body.setPadding(UiScale.insets(20, 24, 20, 24));
         body.setStyle("-fx-background-color: " + PAGE_BG + ";");
         VBox.setVgrow(body, Priority.ALWAYS);
 
         // ════════════════════════════════════════
         // LEFT PANEL
         // ════════════════════════════════════════
-        VBox left = new VBox(14);
-        left.setPrefWidth(300);
-        left.setMinWidth(260);
-        left.setMaxWidth(340);
-        left.setPadding(new Insets(20, 20, 24, 20));
+        VBox left = new VBox(UiScale.size(14));
+        left.setPrefWidth(UiScale.size(340));
+        left.setMinWidth(UiScale.size(320));
+        left.setMaxWidth(UiScale.size(380));
+        left.setPadding(UiScale.insets(20, 20, 24, 20));
         left.setStyle(
             "-fx-background-color: " + PANEL_BG + "; " +
             "-fx-border-color: " + PANEL_BORDER + "; " +
@@ -193,7 +216,7 @@ public class ImportDialogPanel {
 
         // "ADD TO DECK:" heading
         Label addToDeckLbl = new Label("ADD TO DECK:");
-        addToDeckLbl.setFont(Font.font("Serif", 16));
+        addToDeckLbl.setFont(UiScale.buttonFont(20));
         addToDeckLbl.setStyle("-fx-font-weight: bold;");
         addToDeckLbl.setTextFill(Color.web(PRIMARY_BLUE));
 
@@ -202,7 +225,7 @@ public class ImportDialogPanel {
         // ── "Add to Existing Deck" branch ─────────────────────────────
         RadioButton existingRadio = new RadioButton("Add to Existing Deck:");
         existingRadio.setToggleGroup(deckToggle);
-        existingRadio.setFont(Font.font("Serif", 14));
+        existingRadio.setFont(UiScale.bodyFont(18));
         existingRadio.setTextFill(Color.web(PRIMARY_BLUE));
 
         ComboBox<Deck> existingCombo = new ComboBox<>();
@@ -218,7 +241,7 @@ public class ImportDialogPanel {
         // ── "Add to New Deck" branch ───────────────────────────────────
         RadioButton newDeckRadio = new RadioButton("Add to New Deck:");
         newDeckRadio.setToggleGroup(deckToggle);
-        newDeckRadio.setFont(Font.font("Serif", 14));
+        newDeckRadio.setFont(UiScale.bodyFont(18));
         newDeckRadio.setTextFill(Color.web(PRIMARY_BLUE));
 
         TextField nameField = new TextField();
@@ -259,14 +282,14 @@ public class ImportDialogPanel {
         Button jsonBtn = fileImportButton("IMPORT FROM JSON");
 
         // ── main action buttons ────────────────────────────────────────
-        Button importBtn = actionButton("IMPORT TO SYSTEM", "#8bc34a", "#7cb33a");
+        Button importBtn = actionButton("IMPORT TO SYSTEM", "#8bc34a", "#00bf63");
         importBtn.setDisable(true);   // enabled only when ≥1 row is checked
 
         Button cancelBtn = actionButton("CANCEL", "#e57373", "#d32f2f");
 
         // ── cancel handler ─────────────────────────────────────────────
         cancelBtn.setOnAction(e -> {
-            if (confirmCancel(dialog)) dialog.close();
+            if (confirmCancel(ownerWindow)) closeOverlay.run();
         });
 
         // ── IMPORT TO SYSTEM handler ───────────────────────────────────
@@ -283,7 +306,7 @@ public class ImportDialogPanel {
                 .count();
 
             if (blankCards > 0) {
-                customWarning(dialog,
+                customWarning(ownerWindow,
                     "Invalid\nCards!",
                     blankCards + " selected card(s) have a blank question or answer.\n"
                     + "Fill in or deselect them before importing.");
@@ -296,7 +319,7 @@ public class ImportDialogPanel {
                 .count();
 
             if (missingDiff > 0) {
-                customWarning(dialog,
+                customWarning(ownerWindow,
                     "Missing\nDifficulty!",
                     missingDiff + " selected card(s) have no difficulty set.\n"
                     + "Assign Easy, Medium, or Hard on each affected row before importing.");
@@ -326,9 +349,9 @@ public class ImportDialogPanel {
             }
 
             // Persist and navigate back to the deck dashboard
-            dialog.close();
+            closeOverlay.run();
             MainFrame.runSaveTask(
-                mainLayout.getScene().getWindow(),
+                ownerWindow,
                 mc,
                 "Saving imported cards...",
                 () -> {
@@ -352,26 +375,26 @@ public class ImportDialogPanel {
         // ════════════════════════════════════════
         // RIGHT PANEL: preview area
         // ════════════════════════════════════════
-        VBox right = new VBox(8);
+        VBox right = new VBox(UiScale.size(8));
         HBox.setHgrow(right, Priority.ALWAYS);
 
         // "SELECT ALL" row
         CheckBox selectAllCb = new CheckBox("SELECT ALL");
-        selectAllCb.setFont(Font.font("Serif", 13));
+        selectAllCb.setFont(UiScale.bodyFont(18));
         selectAllCb.setTextFill(Color.web(PRIMARY_BLUE));
         Button editPreviewBtn = new Button("EDIT PREVIEW");
-        editPreviewBtn.setFont(Font.font("Serif", 12));
+        editPreviewBtn.setFont(UiScale.buttonFont(16));
         editPreviewBtn.setStyle("-fx-background-color: white; -fx-text-fill: " + PRIMARY_BLUE + "; "
                 + "-fx-border-color: " + PANEL_BORDER + "; -fx-border-radius: 6; -fx-background-radius: 6; "
-                + "-fx-padding: 6 12; -fx-cursor: hand;");
+                + "-fx-padding: " + UiScale.size(6) + " " + UiScale.size(12) + "; -fx-cursor: hand;");
 
         BooleanProperty editPreviewMode = new SimpleBooleanProperty(false);
-        HBox selectAllRow = new HBox(16, selectAllCb, editPreviewBtn);
+        HBox selectAllRow = new HBox(UiScale.size(16), selectAllCb, editPreviewBtn);
         selectAllRow.setAlignment(Pos.CENTER_LEFT);
-        selectAllRow.setPadding(new Insets(0, 0, 4, 4));
+        selectAllRow.setPadding(UiScale.insets(0, 0, 4, 4));
 
         Label sourceDeckInfo = new Label();
-        sourceDeckInfo.setFont(Font.font("Serif", 14));
+        sourceDeckInfo.setFont(UiScale.bodyFont(18));
         sourceDeckInfo.setTextFill(Color.web(PRIMARY_BLUE));
         sourceDeckInfo.setWrapText(true);
         sourceDeckInfo.setVisible(false);
@@ -381,18 +404,18 @@ public class ImportDialogPanel {
             "-fx-border-color: " + PANEL_BORDER + "; " +
             "-fx-border-width: 1; " +
             "-fx-border-radius: 8; -fx-background-radius: 8; " +
-            "-fx-padding: 8 12;"
+            "-fx-padding: " + UiScale.size(8) + " " + UiScale.size(12) + ";"
         );
 
         csvBtn.setOnAction(e -> {
-            File f = chooseFile(dialog, "Import from CSV", "CSV Files", "*.csv");
+            File f = chooseFile(ownerWindow, "Import from CSV", "CSV Files", "*.csv");
             if (f != null) {
                 loadPreview(f, "CSV", cardRows, importBtn, selectAllCb, nameField, descField, sourceDeckInfo, mc);
             }
         });
 
         jsonBtn.setOnAction(e -> {
-            File f = chooseFile(dialog, "Import from JSON", "JSON Files", "*.json");
+            File f = chooseFile(ownerWindow, "Import from JSON", "JSON Files", "*.json");
             if (f != null) {
                 loadPreview(f, "JSON", cardRows, importBtn, selectAllCb, nameField, descField, sourceDeckInfo, mc);
             }
@@ -403,7 +426,7 @@ public class ImportDialogPanel {
         placeholder.setStyle(previewBoxStyle());
         VBox.setVgrow(placeholder, Priority.ALWAYS);
         Label placeholderLbl = new Label("-QUESTIONS WILL BE PREVIEWED HERE-");
-        placeholderLbl.setFont(Font.font("Serif", 16));
+        placeholderLbl.setFont(UiScale.bodyFont(20));
         placeholderLbl.setTextFill(Color.web("#8888b8"));
         placeholder.getChildren().add(placeholderLbl);
 
@@ -427,22 +450,27 @@ public class ImportDialogPanel {
             placeholder.setManaged(!hasRows);
             table.setVisible(hasRows);
             table.setManaged(hasRows);
+            if (hasRows) {
+                Platform.runLater(() -> {
+                    table.refresh();
+                    table.requestLayout();
+                });
+            }
         });
 
-        HBox actionRow = new HBox(16, importBtn, cancelBtn);
+        HBox actionRow = new HBox(UiScale.size(16), importBtn, cancelBtn);
         HBox.setHgrow(importBtn, Priority.ALWAYS);
         HBox.setHgrow(cancelBtn, Priority.ALWAYS);
-        actionRow.setPadding(new Insets(12, 0, 0, 0));
+        actionRow.setPadding(UiScale.insets(12, 0, 0, 0));
 
         right.getChildren().addAll(selectAllRow, sourceDeckInfo, placeholder, table, actionRow);
 
         body.getChildren().addAll(left, right);
         root.getChildren().addAll(titleLbl, body);
 
-        Scene scene = new Scene(root);
-        dialog.setScene(scene);
-        dialog.setMaximized(true);
-        dialog.showAndWait();
+        overlay.getChildren().add(root);
+        appScene.setRoot(modalRoot);
+        modalRoot.getChildren().addAll(previousRoot, overlay);
     }
 
     // ────────────────────────────────────────────────────────────────
@@ -470,19 +498,22 @@ public class ImportDialogPanel {
         table.setEditable(true);
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         table.setFixedCellSize(-1);
+        table.setFocusTraversable(false);
+        table.setOnMousePressed(e -> Platform.runLater(() -> table.getSelectionModel().clearSelection()));
         table.setStyle(
             "-fx-background-color: " + PANEL_BG + "; " +
             "-fx-border-color: " + PANEL_BORDER + "; " +
             "-fx-border-width: 1.5; " +
             "-fx-border-radius: 10; -fx-background-radius: 10; " +
-            "-fx-control-inner-background: " + PANEL_BG + ";"
+            "-fx-control-inner-background: " + PANEL_BG + "; " +
+            UiScale.uiFontCss(18)
         );
 
         // ── checkbox column ────────────────────────────────────────────
         TableColumn<CardRowData, Boolean> cbCol = new TableColumn<>("");
-        cbCol.setPrefWidth(46);
-        cbCol.setMinWidth(46);
-        cbCol.setMaxWidth(46);
+        cbCol.setPrefWidth(UiScale.size(46));
+        cbCol.setMinWidth(UiScale.size(46));
+        cbCol.setMaxWidth(UiScale.size(46));
         cbCol.setSortable(false);
         cbCol.setEditable(true);
         cbCol.setCellValueFactory(cell -> cell.getValue().selectedProperty());
@@ -502,9 +533,9 @@ public class ImportDialogPanel {
 
         // ── difficulty column ──────────────────────────────────────────
         TableColumn<CardRowData, String> dCol = new TableColumn<>("DIFFICULTY");
-        dCol.setPrefWidth(160);
-        dCol.setMinWidth(140);
-        dCol.setMaxWidth(180);
+        dCol.setPrefWidth(UiScale.size(160));
+        dCol.setMinWidth(UiScale.size(140));
+        dCol.setMaxWidth(UiScale.size(180));
         dCol.setSortable(false);
         dCol.setCellValueFactory(cell -> cell.getValue().difficultyProperty());
         dCol.setCellFactory(col -> difficultyComboCell(editPreviewMode));
@@ -553,36 +584,53 @@ public class ImportDialogPanel {
             {
                 label.setWrapText(true);
                 label.setMaxWidth(Double.MAX_VALUE);
-                label.setMinHeight(54);
-                label.setPadding(new Insets(8, 10, 8, 10));
+                label.setMinHeight(UiScale.size(64));
+                label.setPadding(UiScale.insets(10, 12, 10, 12));
+                label.setTextFill(Color.BLACK);
+                label.setTextOverrun(OverrunStyle.CLIP);
                 label.setStyle(
                     "-fx-background-color: white; " +
                     "-fx-border-color: " + PANEL_BORDER + "; " +
                     "-fx-border-width: 1; " +
                     "-fx-border-radius: 4; -fx-background-radius: 4; " +
-                    "-fx-font-family: Serif; -fx-font-size: 15;"
+                    UiScale.uiFontCss(18)
                 );
 
                 ta.setWrapText(true);
                 ta.setStyle(
+                    "-fx-text-fill: black; " +
                     "-fx-background-color: white; " +
                     "-fx-border-color: " + PANEL_BORDER + "; " +
                     "-fx-border-width: 1; " +
                     "-fx-border-radius: 4; -fx-background-radius: 4; " +
-                    "-fx-font-family: Serif; -fx-font-size: 15; -fx-padding: 4 6;"
+                    UiScale.uiFontCss(18) + " -fx-padding: " + UiScale.size(6) + " " + UiScale.size(8) + ";"
                 );
                 ta.setEditable(true);
                 ta.setMaxWidth(Double.MAX_VALUE);
-                ta.setMinHeight(54);
+                ta.setMinHeight(UiScale.size(64));
                 ta.textProperty().addListener((obs, old, nv) -> adjustHeight(nv));
+                widthProperty().addListener((obs, old, nv) -> adjustHeight(ta.getText()));
             }
 
             private void adjustHeight(String text) {
                 if (text == null) text = "";
                 long explicit = text.chars().filter(c -> c == '\n').count();
-                double approxWrapped = text.length() / 50.0;
+                double cellWidth = getWidth();
+                if (cellWidth < UiScale.size(160) && getTableColumn() != null) {
+                    cellWidth = getTableColumn().getWidth();
+                }
+                if (cellWidth < UiScale.size(160)) {
+                    cellWidth = UiScale.size(360);
+                }
+                double usableWidth = Math.max(UiScale.size(120), cellWidth - UiScale.size(36));
+                double averageCharWidth = UiScale.size(9.5);
+                double charsPerLine = Math.max(12, usableWidth / averageCharWidth);
+                double approxWrapped = text.length() / charsPerLine;
                 double lines = Math.max(1, explicit + 1 + approxWrapped);
-                ta.setPrefHeight(Math.max(54, lines * 22 + 14));
+                double height = Math.max(UiScale.size(64), lines * UiScale.size(26) + UiScale.size(18));
+                if (boundRow != null && height > boundRow.previewHeightProperty().get()) {
+                    boundRow.previewHeightProperty().set(height);
+                }
             }
 
             @Override
@@ -595,6 +643,10 @@ public class ImportDialogPanel {
                     if (boundRow != null) {
                         ta.textProperty().unbindBidirectional(propGetter.apply(boundRow));
                         label.textProperty().unbind();
+                        label.prefHeightProperty().unbind();
+                        label.minHeightProperty().unbind();
+                        ta.prefHeightProperty().unbind();
+                        ta.minHeightProperty().unbind();
                         boundRow = null;
                     }
                     setGraphic(null);
@@ -605,10 +657,18 @@ public class ImportDialogPanel {
                         if (boundRow != null) {
                             ta.textProperty().unbindBidirectional(propGetter.apply(boundRow));
                             label.textProperty().unbind();
+                            label.prefHeightProperty().unbind();
+                            label.minHeightProperty().unbind();
+                            ta.prefHeightProperty().unbind();
+                            ta.minHeightProperty().unbind();
                         }
                         boundRow = row;
                         ta.textProperty().bindBidirectional(propGetter.apply(row));
                         label.textProperty().bind(propGetter.apply(row));
+                        label.prefHeightProperty().bind(row.previewHeightProperty());
+                        label.minHeightProperty().bind(row.previewHeightProperty());
+                        ta.prefHeightProperty().bind(row.previewHeightProperty());
+                        ta.minHeightProperty().bind(row.previewHeightProperty());
                     }
                     adjustHeight(ta.getText());
                     setGraphic(editPreviewMode.get() ? ta : label);
@@ -636,19 +696,20 @@ public class ImportDialogPanel {
 
             {
                 label.setMaxWidth(Double.MAX_VALUE);
-                label.setPadding(new Insets(8, 10, 8, 10));
+                label.setPadding(UiScale.insets(10, 12, 10, 12));
+                label.setTextFill(Color.BLACK);
                 label.setStyle(
                     "-fx-background-color: white; " +
                     "-fx-border-color: " + PANEL_BORDER + "; " +
                     "-fx-border-width: 1; " +
                     "-fx-border-radius: 4; -fx-background-radius: 4; " +
-                    "-fx-font-family: Serif; -fx-font-size: 15;"
+                    UiScale.uiFontCss(18)
                 );
 
                 combo.getItems().addAll("--Select Difficulty--", "Easy", "Medium", "Hard");
                 combo.setMaxWidth(Double.MAX_VALUE);
                 combo.setStyle(
-                    "-fx-font-family: Serif; -fx-font-size: 15; " +
+                    UiScale.uiFontCss(18) +
                     "-fx-background-color: white; " +
                     "-fx-border-color: " + PANEL_BORDER + "; " +
                     "-fx-border-radius: 4;"
@@ -668,10 +729,28 @@ public class ImportDialogPanel {
                 CardRowData row = (getTableRow() == null) ? null : getTableRow().getItem();
 
                 if (empty || row == null) {
+                    if (boundRow != null) {
+                        label.prefHeightProperty().unbind();
+                        label.minHeightProperty().unbind();
+                        combo.prefHeightProperty().unbind();
+                        combo.minHeightProperty().unbind();
+                    }
                     boundRow = null;
                     setGraphic(null);
                     setText(null);
                 } else {
+                    if (boundRow != row) {
+                        if (boundRow != null) {
+                            label.prefHeightProperty().unbind();
+                            label.minHeightProperty().unbind();
+                            combo.prefHeightProperty().unbind();
+                            combo.minHeightProperty().unbind();
+                        }
+                        label.prefHeightProperty().bind(row.previewHeightProperty());
+                        label.minHeightProperty().bind(row.previewHeightProperty());
+                        combo.prefHeightProperty().bind(row.previewHeightProperty());
+                        combo.minHeightProperty().bind(row.previewHeightProperty());
+                    }
                     boundRow = row;
                     String display = (item == null || item.isBlank())
                         ? "--Select Difficulty--" : item;
@@ -792,7 +871,7 @@ public class ImportDialogPanel {
     }
 
     /** Opens a file-chooser dialog and returns the chosen file, or {@code null} if cancelled. */
-    private static File chooseFile(Stage owner, String title, String filterDesc, String ext) {
+    private static File chooseFile(Window owner, String title, String filterDesc, String ext) {
         FileChooser fc = new FileChooser();
         fc.setTitle(title);
         fc.getExtensionFilters().add(new FileChooser.ExtensionFilter(filterDesc, ext));
@@ -804,19 +883,21 @@ public class ImportDialogPanel {
     /**
      * Styled confirmation dialog — returns {@code true} if the user clicks Confirm.
      */
-    private static boolean confirmCancel(Stage owner) {
+    private static boolean confirmCancel(Window owner) {
         return customConfirm(owner,
             "Cancel\nImport?",
             "Any loaded questions will be discarded. Are you sure?",
-            "STAY", "YES, EXIT");
+            "STAY", "YES, LEAVE");
     }
 
-    private static boolean customConfirm(Stage owner, String title, String message,
+    private static boolean customConfirm(Window owner, String title, String message,
                                          String cancelLabel, String confirmLabel) {
         boolean[] result = {false};
 
         Stage dialog = new Stage();
-        dialog.initOwner(owner);
+        if (owner != null) {
+            dialog.initOwner(owner);
+        }
         dialog.initModality(Modality.APPLICATION_MODAL);
         dialog.initStyle(StageStyle.TRANSPARENT);
 
@@ -831,18 +912,18 @@ public class ImportDialogPanel {
         HBox topBar = new HBox();
         topBar.setAlignment(Pos.TOP_RIGHT);
         topBar.getChildren().add(popupXButton(() -> dialog.close()));
-        VBox.setMargin(topBar, new Insets(5, -25, 0, 0));
+        VBox.setMargin(topBar, UiScale.insets(5, -25, 0, 0));
 
         Label titleLbl = new Label(title);
-        titleLbl.setFont(Font.font("Serif", 38));
+        titleLbl.setFont(UiScale.headingFont(38));
         titleLbl.setTextFill(Color.web(PRIMARY_BLUE));
         titleLbl.setWrapText(true);
 
         Label msgLbl = new Label(message);
-        msgLbl.setFont(Font.font("Serif", 14));
+        msgLbl.setFont(UiScale.bodyFont(14));
         msgLbl.setTextFill(Color.web(PRIMARY_BLUE));
         msgLbl.setWrapText(true);
-        VBox.setMargin(msgLbl, new Insets(15, 10, 30, 0));
+        VBox.setMargin(msgLbl, UiScale.insets(15, 10, 30, 0));
 
         Button cancelBtn = popupButton(cancelLabel, "#c5cae9", "#b3b9e0");
         cancelBtn.setOnAction(e -> dialog.close());
@@ -855,16 +936,18 @@ public class ImportDialogPanel {
 
         container.getChildren().addAll(topBar, titleLbl, msgLbl, buttons);
 
-        Scene scene = new Scene(container, 300, 490);
+        Scene scene = new Scene(container, UiScale.size(300), UiScale.size(490));
         scene.setFill(Color.TRANSPARENT);
         dialog.setScene(scene);
         dialog.showAndWait();
         return result[0];
     }
 
-    private static void customWarning(Stage owner, String title, String message) {
+    private static void customWarning(Window owner, String title, String message) {
         Stage dialog = new Stage();
-        dialog.initOwner(owner);
+        if (owner != null) {
+            dialog.initOwner(owner);
+        }
         dialog.initModality(Modality.APPLICATION_MODAL);
         dialog.initStyle(StageStyle.TRANSPARENT);
 
@@ -879,18 +962,18 @@ public class ImportDialogPanel {
         HBox topBar = new HBox();
         topBar.setAlignment(Pos.TOP_RIGHT);
         topBar.getChildren().add(popupXButton(() -> dialog.close()));
-        VBox.setMargin(topBar, new Insets(5, -25, 0, 0));
+        VBox.setMargin(topBar, UiScale.insets(5, -25, 0, 0));
 
         Label titleLbl = new Label(title);
-        titleLbl.setFont(Font.font("Serif", 38));
+        titleLbl.setFont(UiScale.headingFont(38));
         titleLbl.setTextFill(Color.web(PRIMARY_BLUE));
         titleLbl.setWrapText(true);
 
         Label msgLbl = new Label(message);
-        msgLbl.setFont(Font.font("Serif", 14));
+        msgLbl.setFont(UiScale.bodyFont(14));
         msgLbl.setTextFill(Color.web(PRIMARY_BLUE));
         msgLbl.setWrapText(true);
-        VBox.setMargin(msgLbl, new Insets(15, 10, 30, 0));
+        VBox.setMargin(msgLbl, UiScale.insets(15, 10, 30, 0));
 
         Button okBtn = popupButton("GOT IT", "#ff9999", "#ff6666");
         okBtn.setOnAction(e -> dialog.close());
@@ -900,7 +983,7 @@ public class ImportDialogPanel {
 
         container.getChildren().addAll(topBar, titleLbl, msgLbl, buttons);
 
-        Scene scene = new Scene(container, 300, 440);
+        Scene scene = new Scene(container, UiScale.size(300), UiScale.size(440));
         scene.setFill(Color.TRANSPARENT);
         dialog.setScene(scene);
         dialog.showAndWait();
@@ -908,7 +991,8 @@ public class ImportDialogPanel {
 
     private static VBox popupContainer() {
         VBox box = new VBox(15);
-        box.setPadding(new Insets(0, 35, 35, 35));
+        box.setSpacing(UiScale.size(15));
+        box.setPadding(UiScale.insets(0, 35, 35, 35));
         box.setAlignment(Pos.TOP_LEFT);
         box.setStyle(
             "-fx-background-color: #f8fafc;" +
@@ -922,9 +1006,9 @@ public class ImportDialogPanel {
     private static Button popupXButton(Runnable onClose) {
         Button btn = new Button("X");
         String normal = "-fx-background-color: transparent; -fx-text-fill: #1A438E;" +
-                        " -fx-font-size: 18; -fx-cursor: hand;";
+                        " -fx-font-size: " + UiScale.size(18) + "px; -fx-cursor: hand;";
         String hover  = "-fx-background-color: transparent; -fx-text-fill: red;" +
-                        " -fx-font-size: 18; -fx-cursor: hand;";
+                        " -fx-font-size: " + UiScale.size(18) + "px; -fx-cursor: hand;";
         btn.setStyle(normal);
         btn.setOnMouseEntered(e -> btn.setStyle(hover));
         btn.setOnMouseExited(e -> btn.setStyle(normal));
@@ -934,13 +1018,13 @@ public class ImportDialogPanel {
 
     private static Button popupButton(String text, String normalColor, String hoverColor) {
         Button btn = new Button(text);
-        btn.setPrefWidth(230);
-        btn.setPrefHeight(45);
+        btn.setPrefWidth(UiScale.size(230));
+        btn.setPrefHeight(UiScale.size(45));
         String normal = "-fx-background-color: " + normalColor + "; -fx-text-fill: " + PRIMARY_BLUE + ";" +
-                        " -fx-font-size: 15; -fx-font-weight: bold;" +
+                        " " + UiScale.buttonFontCss(15) +
                         " -fx-background-radius: 25; -fx-cursor: hand;";
         String hover  = "-fx-background-color: " + hoverColor  + "; -fx-text-fill: " + PRIMARY_BLUE + ";" +
-                        " -fx-font-size: 15; -fx-font-weight: bold;" +
+                        " " + UiScale.buttonFontCss(15) +
                         " -fx-background-radius: 25; -fx-cursor: hand;";
         btn.setStyle(normal);
         btn.setOnMouseEntered(e -> btn.setStyle(hover));
@@ -974,14 +1058,14 @@ public class ImportDialogPanel {
         return "-fx-background-color: white; " +
                "-fx-border-color: " + PANEL_BORDER + "; " +
                "-fx-border-width: 1.5; -fx-border-radius: 5; -fx-background-radius: 5; " +
-               "-fx-font-family: Serif; -fx-font-size: 13;";
+               UiScale.uiFontCss(18);
     }
 
     private static String inputStyle() {
         return "-fx-background-color: white; " +
                "-fx-border-color: " + PANEL_BORDER + "; " +
                "-fx-border-width: 1.5; -fx-border-radius: 5; -fx-background-radius: 5; " +
-               "-fx-font-family: Serif; -fx-font-size: 13; -fx-padding: 6 8;";
+               UiScale.uiFontCss(18) + " -fx-padding: " + UiScale.size(8) + " " + UiScale.size(12) + ";";
     }
 
     private static String previewBoxStyle() {
@@ -997,13 +1081,13 @@ public class ImportDialogPanel {
     private static Button fileImportButton(String text) {
         Button btn = new Button(text);
         btn.setMaxWidth(Double.MAX_VALUE);
-        btn.setPrefHeight(38);
+        btn.setPrefHeight(UiScale.size(44));
         String normal = "-fx-background-color: #d5d5e8; -fx-text-fill: " + PRIMARY_BLUE + "; " +
-                        "-fx-font-family: Serif; -fx-font-size: 13; " +
-                        "-fx-background-radius: 20; -fx-cursor: hand; -fx-padding: 6 14;";
+                        UiScale.buttonFontCss(18) +
+                        " -fx-background-radius: 20; -fx-cursor: hand; -fx-padding: " + UiScale.size(6) + " " + UiScale.size(14) + ";";
         String hover  = "-fx-background-color: #bbbbd8; -fx-text-fill: " + PRIMARY_BLUE + "; " +
-                        "-fx-font-family: Serif; -fx-font-size: 13; " +
-                        "-fx-background-radius: 20; -fx-cursor: hand; -fx-padding: 6 14;";
+                        UiScale.buttonFontCss(18) +
+                        " -fx-background-radius: 20; -fx-cursor: hand; -fx-padding: " + UiScale.size(6) + " " + UiScale.size(14) + ";";
         btn.setStyle(normal);
         btn.setOnMouseEntered(e -> btn.setStyle(hover));
         btn.setOnMouseExited(e  -> btn.setStyle(normal));
@@ -1021,15 +1105,15 @@ public class ImportDialogPanel {
     private static Button actionButton(String text, String normalColour, String hoverColour) {
         Button btn = new Button(text);
         btn.setMaxWidth(Double.MAX_VALUE);
-        btn.setPrefHeight(62);
+        btn.setPrefHeight(UiScale.size(64));
         String normal   = "-fx-background-color: " + normalColour + "; -fx-text-fill: white; " +
-                          "-fx-font-family: Serif; -fx-font-size: 18; " +
+                          UiScale.buttonFontCss(22) +
                           "-fx-background-radius: 28; -fx-cursor: hand;";
         String hover    = "-fx-background-color: " + hoverColour  + "; -fx-text-fill: white; " +
-                          "-fx-font-family: Serif; -fx-font-size: 18; " +
+                          UiScale.buttonFontCss(22) +
                           "-fx-background-radius: 28; -fx-cursor: hand;";
         String disabled = "-fx-background-color: #b0b0b0; -fx-text-fill: #e8e8e8; " +
-                          "-fx-font-family: Serif; -fx-font-size: 18; -fx-background-radius: 28;";
+                          UiScale.buttonFontCss(22) + "-fx-background-radius: 28;";
         btn.setStyle(normal);
         btn.setOnMouseEntered(e -> { if (!btn.isDisabled()) btn.setStyle(hover);  });
         btn.setOnMouseExited(e  -> { if (!btn.isDisabled()) btn.setStyle(normal); });
