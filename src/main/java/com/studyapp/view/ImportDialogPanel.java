@@ -23,6 +23,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -541,6 +542,7 @@ public class ImportDialogPanel {
         dCol.setCellFactory(col -> difficultyComboCell(editPreviewMode));
 
         table.getColumns().addAll(cbCol, qCol, aCol, dCol);
+        stylePreviewTableHeader(table);
 
         // SELECT ALL bulk-toggles every row's selected state
         selectAllCb.setOnAction(e -> {
@@ -563,6 +565,43 @@ public class ImportDialogPanel {
         });
 
         return table;
+    }
+
+    private static void stylePreviewTableHeader(TableView<?> table) {
+        Runnable applyHeaderStyle = () -> {
+            for (Node node : table.lookupAll(".column-header-background")) {
+                node.setStyle(
+                    "-fx-background-color: " + HEADER_DARK + "; " +
+                    "-fx-background-radius: 9 9 0 0; " +
+                    "-fx-border-color: " + PANEL_BORDER + "; " +
+                    "-fx-border-width: 0 0 1.5 0;"
+                );
+            }
+            for (Node node : table.lookupAll(".column-header")) {
+                node.setStyle(
+                    "-fx-background-color: " + HEADER_DARK + "; " +
+                    "-fx-border-color: #d9e2f2; " +
+                    "-fx-border-width: 0 1 0 0; " +
+                    "-fx-padding: " + UiScale.size(8) + " " + UiScale.size(10) + ";"
+                );
+            }
+            for (Node node : table.lookupAll(".column-header .label")) {
+                if (node instanceof Label label) {
+                    label.setTextFill(Color.WHITE);
+                    label.setFont(UiScale.buttonFont(18));
+                    label.setAlignment(Pos.CENTER);
+                    label.setMaxWidth(Double.MAX_VALUE);
+                }
+                node.setStyle("-fx-text-fill: white;");
+            }
+            for (Node node : table.lookupAll(".filler")) {
+                node.setStyle("-fx-background-color: " + HEADER_DARK + ";");
+            }
+        };
+
+        table.skinProperty().addListener((obs, oldSkin, newSkin) -> Platform.runLater(applyHeaderStyle));
+        table.widthProperty().addListener((obs, oldWidth, newWidth) -> Platform.runLater(applyHeaderStyle));
+        Platform.runLater(applyHeaderStyle);
     }
 
     /**
