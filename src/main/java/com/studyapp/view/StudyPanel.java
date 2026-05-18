@@ -1,5 +1,7 @@
 package com.studyapp.view;
 
+import com.studyapp.util.UiScale;
+
 import com.studyapp.controller.CustomException;
 import com.studyapp.controller.MainController;
 import com.studyapp.model.Deck;
@@ -9,6 +11,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
@@ -18,11 +21,12 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Arc;
 import javafx.scene.shape.ArcType;
 import javafx.scene.shape.StrokeLineCap;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.*;
 
 public class StudyPanel {
 
@@ -37,7 +41,8 @@ public class StudyPanel {
     private final MainController mc;
     private final Deck deckData;
     private final BorderPane mainLayout;
-    private final Node savedSidebar;
+    private final Node originalSidebar;
+    private final Runnable returnAction;
 
     private List<Flashcard> flashcards;
     private StudySession studySession;
@@ -51,31 +56,56 @@ public class StudyPanel {
     private Label attemptsLbl;
     private Arc   progressArc;
     private Label pctLabel;
+    private double Xoffset = 0;
+    private double Yoffset = 0;
 
     // ── entry point ───────────────────────────────────────────────────────────
     public static void create(BorderPane mainLayout, Deck deckData, MainController mc) {
-        new StudyPanel(mainLayout, deckData, mc).init();
+        new StudyPanel(
+                mainLayout,
+                deckData,
+                mc,
+                mainLayout.getLeft(),
+                () -> mainLayout.setCenter(MyDeckPanel.create(mainLayout, mc)))
+                .init();
     }
 
-    private StudyPanel(BorderPane mainLayout, Deck deckData, MainController mc) {
+    public static void create(
+            BorderPane mainLayout,
+            Deck deckData,
+            MainController mc,
+            Node originalSidebar,
+            Runnable returnAction) {
+        new StudyPanel(mainLayout, deckData, mc, originalSidebar, returnAction).init();
+    }
+
+    private StudyPanel(
+            BorderPane mainLayout,
+            Deck deckData,
+            MainController mc,
+            Node originalSidebar,
+            Runnable returnAction) {
         this.mainLayout   = mainLayout;
         this.deckData     = deckData;
         this.mc           = mc;
-        this.savedSidebar = mainLayout.getLeft();
+        this.originalSidebar = originalSidebar;
+        this.returnAction = returnAction;
     }
 
     private void init() {
-        flashcards = mc.getFlashcardsByDeck(deckData.getDeckID());
+        flashcards = new ArrayList<>(mc.getFlashcardsByDeck(deckData.getDeckID()));
         if (flashcards == null || flashcards.isEmpty()) {
-            showAlert("No cards in this deck.");
+            MainFrame.showErrorDialog("No cards in this deck.");
             return;
         }
+
+        orderCards();
         correctAnswers = new boolean[flashcards.size()];
 
         try {
             studySession = mc.createStudySession(deckData.getDeckID(), LocalDateTime.now());
         } catch (CustomException e) {
-            showAlert("Could not start session: " + e.getMessage());
+            MainFrame.showErrorDialog("Could not create study session: " + e.getMessage());
             return;
         }
 
@@ -85,11 +115,49 @@ public class StudyPanel {
 
     // ── center swappers ───────────────────────────────────────────────────────
     void showQuestion() {
-        mainLayout.setCenter(QuestionPanel.build(this, flashcards.get(currentIndex), deckData));
+        mainLayout.setCenter(QuestionPanel.build(
+                this,
+                flashcards.get(currentIndex),
+                deckData,
+                currentIndex + 1,
+                flashcards.size()));
     }
 
-    void showResult(boolean isCorrect, String answer, Flashcard card) {
-        mainLayout.setCenter(ResultPanel.build(this, isCorrect, card, answer, deckData));
+    void orderCards(){
+        // Separate cards into: unanswered, weak (wrong attempts), and rest
+        List<Flashcard> unanswered = new ArrayList<>();
+        List<Flashcard> weak = new ArrayList<>();
+        List<Flashcard> rest = new ArrayList<>();
+
+        for (Flashcard card : flashcards) {
+            int totalReviews = (int) mc.getAllCardReviews().stream()
+                    .filter(r -> r.getFlashcardID() == card.getCardID())
+                    .count();
+            int wrongCount = countWrongAttempts(card.getCardID());
+
+            if (totalReviews == 0) {
+                unanswered.add(card);
+            } else if (wrongCount > 0) {
+                weak.add(card);
+            } else {
+                rest.add(card);
+            }
+        }
+
+        // Shuffle each group
+        Collections.shuffle(unanswered);
+        Collections.shuffle(weak);
+        Collections.shuffle(rest);
+
+        // Order: unanswered first, then weak, then rest
+        flashcards.clear();
+        flashcards.addAll(unanswered);
+        flashcards.addAll(weak);
+        flashcards.addAll(rest);
+    }
+
+    void showResult(String result, String answer, Flashcard card) {
+        mainLayout.setCenter(ResultPanel.build(this, result, card, answer, deckData));
     }
 
     // ── called by QuestionPanel on SUBMIT ─────────────────────────────────────
@@ -98,7 +166,8 @@ public class StudyPanel {
 
         Flashcard card = flashcards.get(currentIndex);
         LocalDateTime reviewedAt = LocalDateTime.now();
-        boolean isCorrect = answer.trim().equalsIgnoreCase(card.getAnswer().trim());
+        String result = mc.checkAnswer(card.getAnswer(), answer);
+        boolean isCorrect = result.equals("CORRECT");
 
         // Only count the attempt if the card hasn't been correctly answered yet
         if (!correctAnswers[currentIndex]) {
@@ -118,11 +187,11 @@ public class StudyPanel {
                     isCorrect
             );
         } catch (CustomException e) {
-            showAlert("Could not save review: " + e.getMessage());
+            MainFrame.showErrorDialog("Could not save review: " + e.getMessage());
         }
 
         refreshScore();
-        showResult(isCorrect, answer, card);
+        showResult(result, answer, card);
     }
 
     // ── called by ResultPanel nav buttons ─────────────────────────────────────
@@ -152,28 +221,50 @@ public class StudyPanel {
 
     // ── session end ───────────────────────────────────────────────────────────
     private void finishSession() {
-        endSession();
-        showFinalScore();
-        returnToDeckDetail();
+        if (!endSession()) {
+            return;
+        }
+        autosaveEndedSession(true);
     }
 
     private void endSessionEarly() {
-        endSession();
-        returnToDeckDetail();
+        if (!endSession()) {
+            return;
+        }
+        autosaveEndedSession(false);
     }
 
-    private void endSession() {
+    private boolean endSession() {
         try {
             studySession.setEndedAt(LocalDateTime.now());
             mc.updateEndStudySession(studySession);
+            return true;
         } catch (CustomException e) {
-            showAlert("Could not end session: " + e.getMessage());
+            MainFrame.showErrorDialog("Could not end session: " + e.getMessage());
+            return false;
         }
     }
 
+    private void autosaveEndedSession(boolean showScoreAfterSave) {
+        MainFrame.runSaveTask(
+                mainLayout.getScene().getWindow(),
+                mc,
+                "Saving session...",
+                () -> {
+                    if (showScoreAfterSave) {
+                        showFinalScore();
+                    }
+                    returnToDeckDetail();
+                },
+                errorMessage -> {
+                    returnToDeckDetail();
+                    MainFrame.showErrorDialog("Session autosave failed: " + errorMessage);
+                }
+        );
+    }
+
     private void returnToDeckDetail() {
-        mainLayout.setLeft(savedSidebar);
-        DeckDetailPanel.show(mainLayout, deckData, mc);
+        DeckDetailPanel.show(mainLayout, deckData, mc, returnAction, originalSidebar);
     }
 
     // ── score refresh (sidebar stays mounted, just mutate the labels) ─────────
@@ -188,20 +279,22 @@ public class StudyPanel {
 
     // ── sidebar (built once, never replaced) ──────────────────────────────────
     private VBox buildSidebar() {
-        VBox sidebar = new VBox(15);
-        sidebar.setPadding(new Insets(20));
-        sidebar.setPrefWidth(250);
-        sidebar.setMinWidth(250);
-        sidebar.setMaxWidth(250);
+        VBox sidebar = new VBox(18);
+        sidebar.setPadding(UiScale.insets(20, 24, 20, 24));
+        sidebar.setPrefWidth(UiScale.size(290));
+        sidebar.setMinWidth(UiScale.size(290));
+        sidebar.setMaxWidth(UiScale.size(290));
         sidebar.setStyle("-fx-background-color: transparent;");
 
         Label title = new Label("Study Assistant\nApplication");
-        title.setFont(Font.font("Serif", 18));
+        title.setFont(UiScale.titleFont(38));
+        title.setWrapText(true);
+        title.setMaxWidth(UiScale.size(242));
         title.setTextFill(Color.web(PRIMARY_BLUE));
         VBox.setMargin(title, new Insets(0, 0, 10, 0));
 
-        VBox buttonBox = new VBox(15);
-        buttonBox.setPadding(new Insets(20));
+        VBox buttonBox = new VBox(18);
+        buttonBox.setPadding(UiScale.insets(24));
         buttonBox.setStyle(BORDER_STYLE);
         VBox.setVgrow(buttonBox, Priority.ALWAYS);
 
@@ -209,23 +302,24 @@ public class StudyPanel {
         StackPane arcStack = new StackPane();
         arcStack.setPadding(new Insets(10, 0, 0, 0));
 
-        Arc backgroundArc = new Arc(0, 0, 50, 50, 180, -180);
+        Arc backgroundArc = new Arc(0, 0, 74, 74, 180, -180);
         backgroundArc.setFill(Color.TRANSPARENT);
         backgroundArc.setStroke(Color.web("#e6eaf5"));
-        backgroundArc.setStrokeWidth(12);
+        backgroundArc.setStrokeWidth(18);
         backgroundArc.setType(ArcType.OPEN);
         backgroundArc.setStrokeLineCap(StrokeLineCap.ROUND);
 
-        progressArc = new Arc(0, 0, 50, 50, 180, 0);
+        progressArc = new Arc(0, 0, 74, 74, 180, 0);
         progressArc.setFill(Color.TRANSPARENT);
         progressArc.setStroke(Color.web(HEADER_BLUE));
-        progressArc.setStrokeWidth(12);
+        progressArc.setStrokeWidth(18);
         progressArc.setType(ArcType.OPEN);
         progressArc.setStrokeLineCap(StrokeLineCap.ROUND);
 
         pctLabel = new Label("0%");
-        pctLabel.setFont(Font.font("Serif", FontWeight.BOLD, 20));
-        pctLabel.setTranslateY(5);
+        pctLabel.setFont(UiScale.emphasisFont(34));
+        pctLabel.setTextFill(Color.web(PRIMARY_BLUE));
+        pctLabel.setTranslateY(8);
 
         Group gaugeGroup = new Group(backgroundArc, progressArc);
         arcStack.getChildren().addAll(gaugeGroup, pctLabel);
@@ -235,8 +329,10 @@ public class StudyPanel {
         stats.setAlignment(Pos.CENTER_LEFT);
         correctLbl  = new Label("Correct: 0");
         attemptsLbl = new Label("Attempts: 0");
-        correctLbl.setFont(Font.font("Serif", 18));
-        attemptsLbl.setFont(Font.font("Serif", 18));
+        correctLbl.setFont(UiScale.emphasisFont(24));
+        attemptsLbl.setFont(UiScale.emphasisFont(24));
+        correctLbl.setTextFill(Color.web(PRIMARY_BLUE));
+        attemptsLbl.setTextFill(Color.web(PRIMARY_BLUE));
         stats.getChildren().addAll(correctLbl, attemptsLbl);
 
         Region spacer = new Region();
@@ -245,13 +341,14 @@ public class StudyPanel {
         // ── leave button ──
         Button leaveBtn = new Button("LEAVE");
         leaveBtn.setMaxWidth(Double.MAX_VALUE);
-        leaveBtn.setFont(Font.font("Serif", 16));
+        leaveBtn.setPrefHeight(UiScale.size(56));
+        leaveBtn.setFont(UiScale.buttonFont(20));
         String leaveDefault = "-fx-background-color: #ff9999; -fx-text-fill: black; -fx-border-color: "
-                + PRIMARY_BLUE + "; -fx-border-radius: 5; -fx-background-radius: 5;"
-                + " -fx-padding: 10 15; -fx-cursor: hand;";
+                + PRIMARY_BLUE + "; -fx-border-radius: 7; -fx-background-radius: 7;"
+                + " -fx-padding: 14 18; -fx-cursor: hand;";
         String leaveHover = "-fx-background-color: #ff6666; -fx-text-fill: white; -fx-border-color: "
-                + PRIMARY_BLUE + "; -fx-border-radius: 5; -fx-background-radius: 5;"
-                + " -fx-padding: 10 15; -fx-cursor: hand;";
+                + PRIMARY_BLUE + "; -fx-border-radius: 7; -fx-background-radius: 7;"
+                + " -fx-padding: 14 18; -fx-cursor: hand;";
         leaveBtn.setStyle(leaveDefault);
         leaveBtn.setOnMouseEntered(e -> leaveBtn.setStyle(leaveHover));
         leaveBtn.setOnMouseExited(e  -> leaveBtn.setStyle(leaveDefault));
@@ -263,15 +360,84 @@ public class StudyPanel {
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────
-    private void showFinalScore() {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Session Complete");
-        alert.setHeaderText("Score: " + totalCorrect + "/" + flashcards.size());
-        alert.setContentText("Great work! Your results have been saved.");
-        alert.showAndWait();
+    private int countWrongAttempts(int cardID) {
+        return (int) mc.getAllCardReviews().stream()
+                .filter(r -> r.getFlashcardID() == cardID && !r.isCorrect())
+                .count();
     }
 
-    void showAlert(String msg) {
-        new Alert(Alert.AlertType.ERROR, msg, ButtonType.OK).showAndWait();
+    private void showFinalScore() {
+        Stage dialog = new Stage();
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initStyle(StageStyle.TRANSPARENT);
+        dialog.setTitle("Finished");
+
+        VBox container = new VBox(4);
+        container.setPadding(new Insets(0, 40, 40, 40));
+        container.setAlignment(Pos.TOP_LEFT);
+        container.setStyle("-fx-border-color: #2a548f; -fx-border-radius: 12; -fx-background-radius: 10; -fx-background-color: #f8fafc;");
+
+        container.setOnMousePressed(event -> {
+            Xoffset = event.getSceneX();
+            Yoffset = event.getSceneY();
+        });
+
+        container.setOnMouseDragged(event -> {
+            Stage stage = (Stage) container.getScene().getWindow();
+            stage.setX(event.getScreenX() - Xoffset);
+            stage.setY(event.getScreenY() - Yoffset);
+        });
+
+        Label title = new Label("Session Complete!");
+        title.setFont(UiScale.headingFont(38));
+        title.setTextFill(Color.web("#b3ffae"));
+        VBox.setMargin(title, new Insets(-8, 0, 0, 0));
+
+        Label description = new Label("Score: " + totalCorrect + "/" + flashcards.size() + "\nGreat work!");
+        description.setFont(UiScale.bodyFont(15));
+        description.setTextFill(Color.web("#2a548f"));
+        description.setWrapText(true);
+        description.setMaxWidth(300);
+        VBox.setMargin(description, new Insets(8, 20, 30, 20));
+
+        Button okayBtn = new Button("OKAY");
+        okayBtn.setMaxWidth(Double.MAX_VALUE);
+        okayBtn.setPrefHeight(45);
+
+        String normalStyle = "-fx-background-color: #c5cae9; -fx-text-fill: #2a548f; "
+                + "-fx-font-size: 16; -fx-font-weight: bold; -fx-background-radius: 25; "
+                + "-fx-cursor: hand;";
+        String hoverStyleStr = "-fx-background-color: #b3b9e0; -fx-text-fill: #2a548f; "
+                + "-fx-font-size: 16; -fx-font-weight: bold; -fx-background-radius: 25; "
+                + "-fx-cursor: hand;";
+
+        okayBtn.setStyle(normalStyle);
+        okayBtn.setOnMouseEntered(e -> okayBtn.setStyle(hoverStyleStr));
+        okayBtn.setOnMouseExited(e -> okayBtn.setStyle(normalStyle));
+        okayBtn.setOnAction(e -> dialog.close());
+
+        HBox topBar = new HBox();
+        topBar.setAlignment(Pos.TOP_RIGHT);
+
+        Button closeBtn = new Button("X");
+        String xBarNormal = "-fx-background-color: transparent; -fx-text-fill: #1A438E; -fx-font-size: 18; -fx-cursor: hand;";
+        String xBarHover = "-fx-background-color: transparent; -fx-text-fill: red; -fx-font-size: 18; -fx-cursor: hand; -fx-background-radius: 0 10 0 0;";
+
+        closeBtn.setStyle(xBarNormal);
+        closeBtn.setOnAction(e -> dialog.close());
+        closeBtn.setOnMouseEntered(e -> closeBtn.setStyle(xBarHover));
+        closeBtn.setOnMouseExited(e -> closeBtn.setStyle(xBarNormal));
+
+        topBar.getChildren().add(closeBtn);
+        VBox.setMargin(topBar, new Insets(5, -30, 0, 0));
+
+        container.getChildren().addAll(topBar, title, description, okayBtn);
+
+        Scene scene = new Scene(container);
+        scene.setFill(Color.TRANSPARENT);
+        dialog.setScene(scene);
+        dialog.setResizable(false);
+        dialog.show();
     }
 }
+

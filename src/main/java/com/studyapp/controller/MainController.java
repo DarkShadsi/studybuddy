@@ -3,9 +3,9 @@ package com.studyapp.controller;
 import java.io.File;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -14,7 +14,11 @@ import com.studyapp.model.CardReview;
 import com.studyapp.model.Deck;
 import com.studyapp.model.Flashcard;
 import com.studyapp.model.StudySession;
+import com.studyapp.service.CardJson;
+import com.studyapp.service.CsvImportExportService;
+import com.studyapp.service.ImportPreview;
 import com.studyapp.service.JsonImportExportService;
+import com.studyapp.service.SaveService;
 
 //HANDLES ALL OPERATIONS THAT CONNECTS BACKEND WITH FRONTEND
 //INCLUDES:
@@ -28,12 +32,16 @@ public class MainController {
     private FlashcardController flashcardController;
     private StudyController studyController;
     private ReviewController reviewController;
+    private AnswerChecker answerChecker;
+    private SaveService saveService;
 
     public MainController(){
         deckController = new DeckController(this);
         flashcardController = new FlashcardController(this);
         studyController = new StudyController(this);
         reviewController = new ReviewController(this);
+        answerChecker = new AnswerChecker();
+        saveService = new SaveService();
     }
 
     // --------- AUTHENTICATION --------------
@@ -85,6 +93,10 @@ public class MainController {
         return flashcardController.allFlashcards();
     }
 
+    public Flashcard getFlashcard(int flashcardID){
+        return flashcardController.getFlashcard(flashcardID);
+    }
+
     public List<Flashcard> getFlashcardsByDeck(int deckID){
         return flashcardController.getFlashcardsByDeck(deckID);
     }
@@ -130,6 +142,10 @@ public class MainController {
         studyController.deleteSession(sessionID);
     }
 
+    public String checkAnswer(String expected, String actual){
+        return answerChecker.check(expected, actual);
+    }
+
     //---------- CARD REVIEWS ----------------------//
     public void createCardReview(int sessionID, int cardID, LocalDateTime reviewedAt, boolean isCorrect) throws CustomException{
         reviewController.createCardReview(sessionID, cardID,reviewedAt, isCorrect);
@@ -156,7 +172,7 @@ public class MainController {
 
         Set<Integer> correctCardIds = deckReviews.stream()
                 .filter(CardReview::isCorrect)
-                .map(review -> review.getFlashcard().getCardID())
+                .map(CardReview::getFlashcardID)
                 .collect(Collectors.toSet());
 
         long uniqueCorrectlyReviewed = correctCardIds.size();
@@ -181,18 +197,6 @@ public class MainController {
         return (allCorrectReviews*100)/allReviews;
     }
 
-    public String getOverallProgress(){
-        // Simply ask the ReviewController for the latest unique state of all cards
-        Set<Integer> correctCardIds = getAllCardReviews().stream()
-                .filter(CardReview::isCorrect)
-                .map(review -> review.getFlashcard().getCardID())
-                .collect(Collectors.toSet());
-
-        long uniqueCorrect = correctCardIds.size();
-
-        return uniqueCorrect + " / " + allFlashcards().size();
-    }
-
     public String getCardsReviewedProgress() {
         // Coverage is just the count of unique cards that have been reviewed
         int uniqueReviewedCount = reviewController.getLatestUniqueReviews(getAllCardReviews()).size();
@@ -201,7 +205,17 @@ public class MainController {
 
     public List<Deck> getRecentDecks() {
         return studyController.getRecentSessions().stream()
-                .map(StudySession::getDeck)
+                .map(session -> {
+                    try {
+                        return findDeck(session.getDeckID());
+                    } catch (Exception e) {
+                        System.err.println("Could not find deck: " + e.getMessage());
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .distinct() // REMOVES DUPLICATE
+                .limit(5)
                 .toList();
     }
 
@@ -227,10 +241,7 @@ public class MainController {
     }
 
     public void saveChanges() throws CustomException{
-        deckController.saveDeckToDB();
-        flashcardController.saveFlashcardToDB();
-        studyController.saveStudySessionToDB();
-        reviewController.saveReviewToDB();
+        saveService.saveAll(deckController, flashcardController, studyController, reviewController);
         System.out.println("Changes Saved to Database.");
     }
 
@@ -241,28 +252,119 @@ public class MainController {
                 || reviewController.hasPendingChanges();
     }
 
-    public void saveImportedChanges(List<Deck> importedDecks, List<Flashcard> importedFlashcards) throws CustomException {
-        deckController.saveAddedDecks(importedDecks);
-        flashcardController.saveAddedFlashcards(importedFlashcards);
-    }
-
     // --------- JSON IMPORT / EXPORT --------------
-    /**
-     * Imports decks and cards from a JSON file.
-     * Supports both single-deck and multi-deck JSON formats.
-     * @return number of decks imported
-     */
-    public int importFromJson(File file) throws CustomException {
-        return new JsonImportExportService().importFromFile(file, this);
-    }
-
-    /**
-     * Exports a deck and all its cards to a JSON file.
-     */
     public void exportDeckToJson(int deckID, File file) throws CustomException {
         Deck deck = findDeck(deckID);
         List<Flashcard> cards = getFlashcardsByDeck(deckID);
         new JsonImportExportService().exportDeckToFile(deck, cards, file);
+    }
+
+    public void exportDeckToCsv(int deckID, File file) throws CustomException {
+        Deck deck = findDeck(deckID);
+        List<Flashcard> cards = getFlashcardsByDeck(deckID);
+        new CsvImportExportService().exportDeckToFile(deck, cards, file);
+    }
+
+        // --------- CARD PREVIEW (for ImportDialogPanel) ---------------
+
+    /**
+     * Parses a JSON file and returns all card data as a flat preview list.
+     * No Deck or Flashcard objects are created; the list is for UI preview only.
+     *
+     * @param  file  the JSON file to parse
+     * @return list of card DTOs (difficulty is {@code null} when not set or unrecognised)
+     * @throws CustomException on read or parse errors
+     */
+    public List<CardJson> previewJsonCards(File file) throws CustomException {
+        return new JsonImportExportService().previewCards(file);
+    }
+
+    /**
+     * Parses a JSON file and returns cards plus optional deck metadata for import preview.
+     *
+     * @param file JSON file containing either a card array or a deck object with cards
+     * @return preview data for the import dialog
+     * @throws CustomException on read or parse errors
+     */
+    public ImportPreview previewJsonImport(File file) throws CustomException {
+        return new JsonImportExportService().previewImport(file);
+    }
+
+    /**
+     * Parses a CSV file and returns all card data as a flat preview list.
+     * No Deck or Flashcard objects are created; the list is for UI preview only.
+     *
+     * @param  file  the CSV file to parse
+     * @return list of card DTOs (difficulty is {@code null} when not set or unrecognised)
+     * @throws CustomException on read or parse errors
+     */
+    public List<CardJson> previewCsvCards(File file) throws CustomException {
+        return new CsvImportExportService().previewCards(file);
+    }
+
+    /**
+     * Adds a list of cards to an existing deck.
+     * Objects are created in memory only — call {@link #saveChanges()} to persist.
+     *
+     * @param deckID the ID of the target deck
+     * @param cards  cards to import; each must have a non-null difficulty
+     * @throws CustomException if the deck does not exist or a card cannot be created
+     */
+    public void importCardsToExistingDeck(int deckID, List<CardJson> cards) throws CustomException {
+        validateNoImportDuplicates(deckID, cards);
+        for (CardJson card : cards) {
+            createFlashcard(deckID, card.getQuestion(), card.getAnswer(), card.getDifficulty());
+        }
+    }
+
+    /**
+     * Creates a new deck and imports a list of cards into it.
+     * Objects are created in memory only — call {@link #saveChanges()} to persist.
+     *
+     * @param deckName    name for the new deck (must not be blank)
+     * @param description optional description for the new deck (may be blank)
+     * @param cards       cards to import; each must have a non-null difficulty
+     * @throws CustomException if the deck or any card cannot be created
+     */
+    public void importCardsToNewDeck(String deckName, String description, List<CardJson> cards)
+            throws CustomException {
+        validateNoImportDuplicates(null, cards);
+        Deck newDeck = createDeck(deckName, description);
+        for (CardJson card : cards) {
+            createFlashcard(newDeck.getDeckID(), card.getQuestion(), card.getAnswer(), card.getDifficulty());
+        }
+    }
+
+    private void validateNoImportDuplicates(Integer targetDeckID, List<CardJson> cards) throws CustomException {
+        Set<String> seen = new HashSet<>();
+        for (CardJson card : cards) {
+            String key = cardKey(card.getQuestion(), card.getAnswer());
+            if (!seen.add(key)) {
+                throw new CustomException("Import contains duplicate cards. Remove repeated question/answer pairs before importing.");
+            }
+        }
+
+        if (targetDeckID == null) {
+            return;
+        }
+
+        Set<String> existingKeys = getFlashcardsByDeck(targetDeckID).stream()
+                .map(card -> cardKey(card.getQuestion(), card.getAnswer()))
+                .collect(Collectors.toSet());
+
+        for (CardJson card : cards) {
+            if (existingKeys.contains(cardKey(card.getQuestion(), card.getAnswer()))) {
+                throw new CustomException("One or more imported cards already exist in the database.");
+            }
+        }
+    }
+
+    private String cardKey(String question, String answer) {
+        return normalizeCardText(question) + "\n" + normalizeCardText(answer);
+    }
+
+    private String normalizeCardText(String value) {
+        return value == null ? "" : value.trim().replaceAll("\\s+", " ").toLowerCase();
     }
 
 }

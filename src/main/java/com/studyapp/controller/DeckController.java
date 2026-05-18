@@ -5,6 +5,7 @@ import com.studyapp.model.Deck;
 import com.studyapp.model.Flashcard;
 import com.studyapp.model.StudySession;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -31,14 +32,6 @@ public class DeckController {
     public Deck createDeck(String deckName, String description) throws CustomException{
         Deck deck = new Deck(lastDeckID, deckName, description, LocalDateTime.now());
 
-        //VALIDATE ID UNIQUENESS
-        if(decks.stream().anyMatch(i -> (i.getDeckID() == deck.getDeckID()) && (i != deck))){
-            throw new CustomException("Deck ID already exists.");
-        }
-        //VALIDATE NAME UNIQUENESS
-        if(decks.stream().anyMatch(i -> (i.getName().equals(deck.getName()) && (i != deck)))){
-            throw new CustomException("Deck name already exists.");
-        }
         validateConstraints(deck);
         decks.add(deck);
         addedDecks.add(deck);
@@ -68,7 +61,7 @@ public class DeckController {
         }
         //DELETE ALL SESSIONS ASSOCIATED IN THIS DECK
         for(StudySession session: mc.getAllSessions()){
-            if(session.getDeck().getDeckID() == deckID){
+            if(session.getDeckID() == deckID){
                 mc.deleteSession(session.getSessionID());
             }
         }
@@ -120,18 +113,8 @@ public class DeckController {
 
     public void saveDeckToDB() throws CustomException{
         try{
-            for(Deck deck: addedDecks){
-                deckDaoImpl.insert(deck);
-            }
-            for(Deck deck: modifiedDecks.values()){
-                deckDaoImpl.update(deck);
-            }
-            for(int deckID: deletedDecks){
-                deckDaoImpl.delete(deckID);
-            }
-            addedDecks.clear();
-            modifiedDecks.clear();
-            deletedDecks.clear();
+            persistPendingChanges(null);
+            markPendingChangesSaved();
         }catch(Exception e){
             throw new CustomException("Failed to Save Decks");
         }
@@ -154,7 +137,47 @@ public class DeckController {
         return !addedDecks.isEmpty() || !modifiedDecks.isEmpty() || !deletedDecks.isEmpty();
     }
 
+    public void persistPendingChanges(Connection conn) throws SQLException {
+        if (conn == null) {
+            for (int deckID : deletedDecks) {
+                deckDaoImpl.delete(deckID);
+            }
+            for (Deck deck : addedDecks) {
+                deckDaoImpl.insert(deck);
+            }
+            for (Deck deck : modifiedDecks.values()) {
+                deckDaoImpl.update(deck);
+            }
+            return;
+        }
+
+        for (int deckID : deletedDecks) {
+            deckDaoImpl.delete(conn, deckID);
+        }
+        for (Deck deck : addedDecks) {
+            deckDaoImpl.insert(conn, deck);
+        }
+        for (Deck deck : modifiedDecks.values()) {
+            deckDaoImpl.update(conn, deck);
+        }
+    }
+
+    public void markPendingChangesSaved() {
+        addedDecks.clear();
+        modifiedDecks.clear();
+        deletedDecks.clear();
+    }
+
     void validateConstraints(Deck deck) throws CustomException{
+        //VALIDATE ID UNIQUENESS
+        if(decks.stream().anyMatch(i -> (i.getDeckID() == deck.getDeckID()) && i != deck)){
+            throw new CustomException("Deck ID already exists.");
+        }
+        //VALIDATE NAME UNIQUENESS
+        if(decks.stream().anyMatch(i -> (i.getName().equals(deck.getName()) && i != deck))){
+            throw new CustomException("Deck name already exists.");
+        }
+
         //VALIDATE NAME NOT NULL
         if(deck.getName() == null || deck.getName().trim().isEmpty()){
             throw new CustomException("Name cannot be empty.");

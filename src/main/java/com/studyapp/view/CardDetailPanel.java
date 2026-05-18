@@ -1,20 +1,19 @@
 package com.studyapp.view;
 
+import com.studyapp.util.UiScale;
+
 import java.time.format.DateTimeFormatter;
 
 import com.studyapp.controller.CustomException;
 import com.studyapp.controller.MainController;
+import com.studyapp.model.Deck;
 import com.studyapp.model.Flashcard;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -25,25 +24,11 @@ import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
-/**
- * CardDetailPanel
- *
- * Displays the full detail view of a single Flashcard.
- *
- * Responsibilities (Person 3 – Flashcard UI):
- *  - Render question, answer, and metadata in a styled panel.
- *  - Provide an Edit flow: clicking "Edit" makes the question, answer,
- *    and difficulty fields editable; "Save Changes" persists the update.
- *  - Provide a Delete flow: clicking "DELETE" shows a confirmation popup;
- *    confirming with "YES" removes the card via MainController.
- *  - After either operation, the onNavigateBack callback is invoked so the
- *    calling list panel (e.g. AllCardsPanel) rebuilds itself from fresh data.
- *
- * Does NOT own MainController or any DAO — it delegates to mc.updateFlashcard()
- * and mc.deleteFlashcard() as required by the conflict-reduction rules.
- */
 public class CardDetailPanel {
+    private static double delXOffset = 0;
+    private static double delYOffset = 0;
 
     private static final String PRIMARY_BLUE = "#2a548f";
     private static final String HEADER_BLUE  = "#41729f";
@@ -53,72 +38,45 @@ public class CardDetailPanel {
             + "; -fx-background-radius: 10"
             + "; -fx-background-color: white;";
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Public entry point
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Replaces the main layout's center and sidebar with the card-detail view.
-     *
-     * @param mainLayout     the root BorderPane of the application
-     * @param flashcard      the card to display / edit / delete
-     * @param mc             the central MainController
-     * @param onNavigateBack called after a successful save or delete so the
-     *                       previous list panel can refresh its content;
-     *                       if null, the raw prevContent node is restored instead
-     */
     public static void show(BorderPane mainLayout, Flashcard flashcard,
                             MainController mc, Runnable onNavigateBack) {
 
         Node savedSidebar = mainLayout.getLeft();
         Node prevContent  = mainLayout.getCenter();
 
-        // Shared editable fields — created once and referenced by both
-        // the sidebar buttons and the content panel.
         TextArea  questionArea = buildTextArea(flashcard.getQuestion(), HEADER_BLUE, "white");
         TextArea  answerArea   = buildTextArea(flashcard.getAnswer(), "white", "#333333");
-        TextField diffField    = buildDiffField(flashcard.getDifficulty());
+        TextField diffField    = buildDiffField(flashcard.getDifficulty().toUpperCase());
 
         VBox content = buildContent(flashcard, questionArea, answerArea, diffField);
-        VBox sidebar = buildSidebar(
-                mainLayout, savedSidebar, prevContent,
-                flashcard, mc, questionArea, answerArea, diffField,
-                onNavigateBack);
+        VBox sidebar = buildSidebar( mainLayout, savedSidebar, prevContent, flashcard, mc, questionArea, answerArea, diffField, onNavigateBack);
 
         mainLayout.setLeft(sidebar);
         mainLayout.setCenter(content);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Sidebar
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Builds the left sidebar with Edit, DELETE, Save Changes, and BACK buttons.
-     *
-     * Edit mode is tracked via a single-element boolean array (editMode[0]) so
-     * it can be mutated inside lambda expressions.
-     */
     private static VBox buildSidebar(
             BorderPane mainLayout, Node savedSidebar, Node prevContent,
             Flashcard flashcard, MainController mc,
             TextArea questionArea, TextArea answerArea, TextField diffField,
             Runnable onNavigateBack) {
 
-        VBox sidebar = new VBox(15);
-        sidebar.setPadding(new Insets(20));
-        sidebar.setPrefWidth(250);
-        sidebar.setMinWidth(250);
-        sidebar.setMaxWidth(250);
+        VBox sidebar = new VBox(18);
+        sidebar.setPadding(UiScale.insets(20, 24, 20, 24));
+        sidebar.setPrefWidth(UiScale.size(290));
+        sidebar.setMinWidth(UiScale.size(290));
+        sidebar.setMaxWidth(UiScale.size(290));
         sidebar.setStyle("-fx-background-color: transparent;");
 
         Label title = new Label("Study Assistant\nApplication");
-        title.setFont(Font.font("Serif", 18));
+        title.setFont(UiScale.titleFont(38));
+        title.setWrapText(true);
+        title.setMaxWidth(UiScale.size(242));
         title.setTextFill(Color.web(PRIMARY_BLUE));
         VBox.setMargin(title, new Insets(0, 0, 10, 0));
 
-        VBox buttonBox = new VBox(15);
-        buttonBox.setPadding(new Insets(20));
+        VBox buttonBox = new VBox(18);
+        buttonBox.setPadding(UiScale.insets(24));
         buttonBox.setStyle(BORDER_STYLE);
         VBox.setVgrow(buttonBox, Priority.ALWAYS);
 
@@ -126,37 +84,42 @@ public class CardDetailPanel {
         final String editIdleStyle =
                 "-fx-background-color: #e6eaf5; -fx-text-fill: black;"
                 + " -fx-border-color: " + PRIMARY_BLUE
-                + "; -fx-border-radius: 5; -fx-background-radius: 5;"
-                + " -fx-padding: 10 15; -fx-cursor: hand;";
+                + "; -fx-border-radius: 7; -fx-background-radius: 7;"
+                + " -fx-padding: 14 18; -fx-cursor: hand;";
         final String editActiveStyle =
                 "-fx-background-color: " + PRIMARY_BLUE + "; -fx-text-fill: white;"
-                + " -fx-border-radius: 5; -fx-background-radius: 5;"
-                + " -fx-padding: 10 15; -fx-cursor: hand;";
+                + " -fx-border-radius: 7; -fx-background-radius: 7;"
+                + " -fx-padding: 14 18; -fx-cursor: hand;";
 
         Button editBtn = new Button("Edit");
         editBtn.setMaxWidth(Double.MAX_VALUE);
-        editBtn.setFont(Font.font("Serif", 16));
+        editBtn.setPrefHeight(UiScale.size(56));
+        editBtn.setFont(UiScale.buttonFont(20));
         editBtn.setStyle(editIdleStyle);
 
         // ── DELETE button ─────────────────────────────────────────────────────
         Button deleteBtn = new Button("DELETE");
         deleteBtn.setMaxWidth(Double.MAX_VALUE);
-        deleteBtn.setFont(Font.font("Serif", 16));
+        deleteBtn.setPrefHeight(UiScale.size(56));
+        deleteBtn.setFont(UiScale.buttonFont(20));
+        deleteBtn.setVisible(false);
+        deleteBtn.setManaged(false);
         deleteBtn.setStyle(
                 "-fx-background-color: white; -fx-text-fill: #cc0000;"
-                + " -fx-border-color: #cc0000; -fx-border-radius: 5;"
-                + " -fx-background-radius: 5; -fx-padding: 10 15; -fx-cursor: hand;");
+                + " -fx-border-color: #cc0000; -fx-border-radius: 7;"
+                + " -fx-background-radius: 7; -fx-padding: 14 18; -fx-cursor: hand;");
 
         // ── Save Changes button (hidden until edit mode is active) ────────────
         Button saveBtn = new Button("Save Changes");
         saveBtn.setMaxWidth(Double.MAX_VALUE);
-        saveBtn.setFont(Font.font("Serif", 16));
+        saveBtn.setPrefHeight(UiScale.size(56));
+        saveBtn.setFont(UiScale.buttonFont(20));
         saveBtn.setVisible(false);
-        saveBtn.setManaged(false);   // takes no layout space when hidden
+        saveBtn.setManaged(false);
         saveBtn.setStyle(
                 "-fx-background-color: white; -fx-text-fill: #2d7a2d;"
-                + " -fx-border-color: #2d7a2d; -fx-border-radius: 5;"
-                + " -fx-background-radius: 5; -fx-padding: 10 15; -fx-cursor: hand;");
+                + " -fx-border-color: #2d7a2d; -fx-border-radius: 7;"
+                + " -fx-background-radius: 7; -fx-padding: 14 18; -fx-cursor: hand;");
 
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
@@ -164,16 +127,17 @@ public class CardDetailPanel {
         // ── BACK button ───────────────────────────────────────────────────────
         final String backDefault =
                 "-fx-background-color: #ff9999; -fx-text-fill: black; -fx-border-color: "
-                + PRIMARY_BLUE + "; -fx-border-radius: 5; -fx-background-radius: 5;"
-                + " -fx-padding: 10 15; -fx-cursor: hand;";
+                + PRIMARY_BLUE + "; -fx-border-radius: 7; -fx-background-radius: 7;"
+                + " -fx-padding: 14 18; -fx-cursor: hand;";
         final String backHover =
                 "-fx-background-color: #ff6666; -fx-text-fill: white; -fx-border-color: "
-                + PRIMARY_BLUE + "; -fx-border-radius: 5; -fx-background-radius: 5;"
-                + " -fx-padding: 10 15; -fx-cursor: hand;";
+                + PRIMARY_BLUE + "; -fx-border-radius: 7; -fx-background-radius: 7;"
+                + " -fx-padding: 14 18; -fx-cursor: hand;";
 
         Button backBtn = new Button("BACK");
         backBtn.setMaxWidth(Double.MAX_VALUE);
-        backBtn.setFont(Font.font("Serif", 16));
+        backBtn.setPrefHeight(UiScale.size(56));
+        backBtn.setFont(UiScale.buttonFont(20));
         backBtn.setStyle(backDefault);
         backBtn.setOnMouseEntered(ev -> backBtn.setStyle(backHover));
         backBtn.setOnMouseExited(ev  -> backBtn.setStyle(backDefault));
@@ -182,7 +146,6 @@ public class CardDetailPanel {
             mainLayout.setCenter(prevContent);
         });
 
-        // ── Edit toggle logic ─────────────────────────────────────────────────
         boolean[] editMode = {false};
 
         editBtn.setOnAction(ev -> {
@@ -208,7 +171,7 @@ public class CardDetailPanel {
                       + " -fx-background-color: transparent;");
 
             diffField.setStyle(
-                    "-fx-font-size: 18px; -fx-font-family: Serif;"
+                    "-fx-font-size: 18px; -fx-font-family: 'Segoe UI';"
                     + " -fx-background-color: " + (on ? "#f0f4ff" : "transparent") + ";"
                     + " -fx-border-color: " + (on ? PRIMARY_BLUE : "transparent") + ";"
                     + " -fx-border-radius: 3;");
@@ -216,70 +179,32 @@ public class CardDetailPanel {
             // Show / hide Save Changes
             saveBtn.setVisible(on);
             saveBtn.setManaged(on);
+            deleteBtn.setVisible(on);
+            deleteBtn.setManaged(on);
 
             editBtn.setStyle(on ? editActiveStyle : editIdleStyle);
         });
 
-        // ── Save Changes logic ────────────────────────────────────────────────
         saveBtn.setOnAction(ev -> {
             String newQuestion   = questionArea.getText().trim();
             String newAnswer     = answerArea.getText().trim();
             String newDifficulty = diffField.getText().trim().toUpperCase();
 
-            // Basic validation
-            if (newQuestion.isEmpty() || newAnswer.isEmpty() || newDifficulty.isEmpty()) {
-                showAlert("Validation Error",
-                        "Question, answer, and difficulty cannot be empty.");
-                return;
-            }
-            if (!newDifficulty.equals("EASY")
-                    && !newDifficulty.equals("MEDIUM")
-                    && !newDifficulty.equals("HARD")) {
-                showAlert("Validation Error",
-                        "Difficulty must be EASY, MEDIUM, or HARD.");
-                return;
-            }
-
-            Flashcard updated = new Flashcard(
-                    flashcard.getCardID(),
-                    flashcard.getDeck(),
-                    newQuestion,
-                    newAnswer,
-                    newDifficulty,
-                    flashcard.getCreatedAt());
-
             try {
-                mc.updateFlashcard(updated);
+                saveChanges(flashcard, mc, newQuestion, newAnswer, newDifficulty);
                 navigateBack(mainLayout, savedSidebar, prevContent, onNavigateBack);
             } catch (CustomException ex) {
-                showAlert("Save Failed", ex.getMessage());
+                MainFrame.showErrorDialog("Save Failed: " + ex.getMessage());
             }
         });
 
-        // ── DELETE logic ──────────────────────────────────────────────────────
-        deleteBtn.setOnAction(ev ->
-                showDeleteConfirm(flashcard, mc, mainLayout,
-                        savedSidebar, prevContent, onNavigateBack));
+        deleteBtn.setOnAction(ev -> showDeleteCardDialog(mainLayout, mc, flashcard, savedSidebar, onNavigateBack));
 
-        buttonBox.getChildren().addAll(editBtn, deleteBtn, saveBtn, spacer, backBtn);
+        buttonBox.getChildren().addAll(editBtn, saveBtn, deleteBtn, spacer, backBtn);
         sidebar.getChildren().addAll(title, buttonBox);
         return sidebar;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Content panel
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Builds the center content panel.
-     *
-     * The question and answer areas are TextAreas styled to look like the
-     * original Labels. They are non-editable by default; the Edit button
-     * in the sidebar enables them without rebuilding this panel.
-     *
-     * The difficulty TextField sits inline in the info box next to a
-     * "Difficulty:" label, also non-editable by default.
-     */
     private static VBox buildContent(Flashcard flashcard,
                                      TextArea questionArea,
                                      TextArea answerArea,
@@ -301,13 +226,13 @@ public class CardDetailPanel {
                 "-fx-background-color: " + HEADER_BLUE + ";"
                 + " -fx-background-radius: 15; -fx-padding: 10;");
 
-        Label frontLabel = new Label("Front:");
-        frontLabel.setFont(Font.font("Serif", 16));
-        frontLabel.setTextFill(Color.WHITE);
+        Label questionLabel = new Label("Question:");
+        questionLabel.setFont(UiScale.headingFont(16));
+        questionLabel.setTextFill(Color.WHITE);
 
         questionArea.setMaxWidth(Double.MAX_VALUE);
         questionArea.setWrapText(true);
-        questionArea.setFont(Font.font("Serif", 26));
+        questionArea.setFont(UiScale.bodyFont(26));
         questionArea.setStyle(
                 "-fx-control-inner-background: " + HEADER_BLUE + ";"
                 + " -fx-text-fill: white;"
@@ -315,7 +240,7 @@ public class CardDetailPanel {
                 + " -fx-background-color: transparent;");
         VBox.setVgrow(questionArea, Priority.ALWAYS);
 
-        questionSection.getChildren().addAll(frontLabel, questionArea);
+        questionSection.getChildren().addAll(questionLabel, questionArea);
 
         // ── Answer section ────────────────────────────────────────────────────
         VBox answerSection = new VBox(4);
@@ -323,19 +248,19 @@ public class CardDetailPanel {
         answerSection.setStyle(BORDER_STYLE);
         answerSection.setPadding(new Insets(10));
 
-        Label backLabel = new Label("Back:");
-        backLabel.setFont(Font.font("Serif", 16));
+        Label answerLabel = new Label("Answer:");
+        answerLabel.setFont(UiScale.headingFont(16));
 
         answerArea.setMaxWidth(Double.MAX_VALUE);
         answerArea.setWrapText(true);
-        answerArea.setFont(Font.font("Serif", 22));
+        answerArea.setFont(UiScale.bodyFont(22));
         answerArea.setStyle(
                 "-fx-control-inner-background: white;"
                 + " -fx-border-color: transparent;"
                 + " -fx-background-color: transparent;");
         VBox.setVgrow(answerArea, Priority.ALWAYS);
 
-        answerSection.getChildren().addAll(backLabel, answerArea);
+        answerSection.getChildren().addAll(answerLabel, answerArea);
 
         // ── Info box ──────────────────────────────────────────────────────────
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -347,10 +272,10 @@ public class CardDetailPanel {
 
         // Difficulty row: static label + editable TextField side by side
         Label diffLabel = infoLabel("Difficulty: ");
-        diffField.setFont(Font.font("Serif", 21));
+        diffField.setFont(UiScale.bodyFont(21));
         diffField.setPrefWidth(150);
         diffField.setStyle(
-                "-fx-font-size: 18px; -fx-font-family: Serif;"
+                "-fx-font-size: 18px; -fx-font-family: 'Segoe UI';"
                 + " -fx-background-color: transparent;"
                 + " -fx-border-color: transparent;");
 
@@ -359,7 +284,7 @@ public class CardDetailPanel {
 
         infoBox.getChildren().addAll(
                 infoLabel("\nID: "      + flashcard.getCardID()),
-                infoLabel("Deck: "     + flashcard.getDeck().getDeckID()),
+                infoLabel("Deck: "     + flashcard.getDeckID()),
                 diffRow,
                 infoLabel("Created at: " + flashcard.getCreatedAt().format(fmt)));
 
@@ -368,112 +293,144 @@ public class CardDetailPanel {
         return wrapper;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Delete confirmation popup
-    // ─────────────────────────────────────────────────────────────────────────
+    private static void saveChanges(Flashcard flashcard, MainController mc, String newQuestion, String newAnswer, String newDifficulty) throws CustomException{
+        String oldQuestion = flashcard.getQuestion();
+        String oldAnswer = flashcard.getAnswer();
+        String oldDifficulty = flashcard.getDifficulty();
 
-    /**
-     * Shows a modal "Delete Card?" popup.
-     *
-     * Layout matches the provided mockup:
-     *  - Rounded light-blue container
-     *  - "Delete Card?" title in PRIMARY_BLUE
-     *  - Description text
-     *  - Salmon-red YES button
-     *  - Light-green NO button
-     *
-     * YES → mc.deleteFlashcard() → close popup → navigate back (refreshed list)
-     * NO  → close popup, no side effects
-     */
-    private static void showDeleteConfirm(
-            Flashcard flashcard, MainController mc,
-            BorderPane mainLayout, Node savedSidebar, Node prevContent,
-            Runnable onNavigateBack) {
+        if(!newQuestion.equals(oldQuestion) || !newAnswer.equals(oldAnswer) || !newDifficulty.equals(oldDifficulty)){
+            flashcard.setQuestion(newQuestion);
+            flashcard.setAnswer(newAnswer);
+            flashcard.setDifficulty(newDifficulty);
+            try{
+                mc.updateFlashcard(flashcard);
+            }catch(CustomException e){
+                flashcard.setQuestion(oldQuestion);
+                flashcard.setAnswer(oldAnswer);
+                flashcard.setDifficulty(oldDifficulty);
+                throw e;
+            }
+        }
+    }
 
-        Stage popup = new Stage();
-        popup.initModality(Modality.APPLICATION_MODAL);
-        popup.setResizable(false);
-        popup.setTitle("Confirm Delete");
+    private static void showDeleteCardDialog(
+            BorderPane mainLayout,
+            MainController mc,
+            Flashcard flashcard,
+            Node originalSidebar,
+            Runnable returnAction) {
+        Stage dialog = new Stage();
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initStyle(StageStyle.TRANSPARENT);
+        dialog.setTitle("Delete Deck");
 
-        VBox root = new VBox(20);
-        root.setAlignment(Pos.CENTER);
-        root.setPadding(new Insets(40, 50, 40, 50));
-        root.setStyle(
-                "-fx-background-color: #eef1fa;"
-                + " -fx-background-radius: 20;"
-                + " -fx-border-color: #c5cce8;"
-                + " -fx-border-radius: 20;"
-                + " -fx-border-width: 2;");
+        VBox container = new VBox(20);
+        container.setPrefWidth(300);
+        container.setPrefHeight(500);
+        container.setSpacing(15);
+        container.setPadding(new Insets(0, 40, 40, 40));
+        container.setAlignment(Pos.TOP_LEFT);
+        container.setStyle("-fx-border-color: #2a548f; -fx-border-radius: 12; -fx-background-radius: 10; -fx-background-color: #f8fafc;");
 
-        Label titleLbl = new Label("Delete Card?");
-        titleLbl.setFont(Font.font("Serif", 28));
-        titleLbl.setTextFill(Color.web(PRIMARY_BLUE));
+        container.setOnMousePressed(event -> {
+            delXOffset = event.getSceneX();
+            delYOffset = event.getSceneY();
+        });
 
-        Label msgLbl = new Label(
-                "This will permanently\nremove this card from the\ndeck. Are you sure?");
-        msgLbl.setFont(Font.font("Serif", 15));
-        msgLbl.setTextFill(Color.web(PRIMARY_BLUE));
-        msgLbl.setTextAlignment(TextAlignment.CENTER);
-        msgLbl.setAlignment(Pos.CENTER);
+        container.setOnMouseDragged(event -> {
+            Stage stage = (Stage) container.getScene().getWindow();
+            stage.setX(event.getScreenX() - delXOffset);
+            stage.setY(event.getScreenY() - delYOffset);
+        });
 
-        // YES button — salmon-red
-        final String yesDefault =
-                "-fx-background-color: #e08080; -fx-text-fill: #6b0000;"
-                + " -fx-background-radius: 30; -fx-padding: 12 30; -fx-cursor: hand;";
-        final String yesHover =
-                "-fx-background-color: #c86060; -fx-text-fill: white;"
-                + " -fx-background-radius: 30; -fx-padding: 12 30; -fx-cursor: hand;";
+        Label title = new Label("Delete\nCard?");
+        title.setFont(UiScale.headingFont(41));
+        title.setTextFill(Color.web("#2a548f"));
 
-        Button yesBtn = new Button("YES");
-        yesBtn.setPrefWidth(180);
-        yesBtn.setFont(Font.font("Serif", 18));
-        yesBtn.setStyle(yesDefault);
-        yesBtn.setOnMouseEntered(e -> yesBtn.setStyle(yesHover));
-        yesBtn.setOnMouseExited(e  -> yesBtn.setStyle(yesDefault));
-        yesBtn.setOnAction(e -> {
+        Label description = new Label("This will permanently delete this card and all records of its history. Are you sure you want to delete this card?");
+        description.setFont(UiScale.bodyFont(15));
+        description.setTextFill(Color.web("#2a548f"));
+        description.setWrapText(true);
+        VBox.setMargin(description, new Insets(20, 20, 35, 0));
+
+        Label errorLabel = new Label();
+        errorLabel.setFont(UiScale.bodyFont(13));
+        errorLabel.setTextFill(Color.web("#c0392b"));
+        errorLabel.setWrapText(true);
+        errorLabel.setVisible(false);
+        errorLabel.setManaged(false);
+        VBox.setMargin(errorLabel, new Insets(-25, 0, 0, 0));
+
+        Button cancelBtn = new Button("CANCEL");
+        cancelBtn.setPrefWidth(250);
+        cancelBtn.setPrefHeight(45);
+        String normalStyle = "-fx-background-color: #c5cae9; -fx-text-fill: #2a548f; "
+                + "-fx-font-size: 16; -fx-font-weight: bold; -fx-background-radius: 25; "
+                + "-fx-cursor: hand;";
+        String hoverStyleStr = "-fx-background-color: #b3b9e0; -fx-text-fill: #2a548f; "
+                + "-fx-font-size: 16; -fx-font-weight: bold; -fx-background-radius: 25; "
+                + "-fx-cursor: hand;";
+
+        cancelBtn.setStyle(normalStyle);
+        cancelBtn.setOnMouseEntered(e -> cancelBtn.setStyle(hoverStyleStr));
+        cancelBtn.setOnMouseExited(e -> cancelBtn.setStyle(normalStyle));
+        cancelBtn.setOnAction(e -> dialog.close());
+
+        Button deleteBtn = new Button("DELETE");
+        deleteBtn.setPrefWidth(250);
+        deleteBtn.setPrefHeight(45);
+        String delNormalStyle = "-fx-background-color: #ff9999; -fx-text-fill: #2a548f; "
+                + "-fx-font-size: 16; -fx-font-weight: bold; -fx-background-radius: 25; "
+                + "-fx-cursor: hand;";
+        String delHoverStyle = "-fx-background-color: #ff6666; -fx-text-fill: #2a548f; "
+                + "-fx-font-size: 16; -fx-font-weight: bold; -fx-background-radius: 25; "
+                + "-fx-cursor: hand;";
+
+        deleteBtn.setStyle(delNormalStyle);
+        deleteBtn.setOnMouseEntered(e -> deleteBtn.setStyle(delHoverStyle));
+        deleteBtn.setOnMouseExited(e -> deleteBtn.setStyle(delNormalStyle));
+        deleteBtn.setOnAction(e -> {
             try {
                 mc.deleteFlashcard(flashcard.getCardID());
-                popup.close();
-                navigateBack(mainLayout, savedSidebar, prevContent, onNavigateBack);
+                MainFrame.showSuccessDialog("Card deleted successfully.");
+                mainLayout.setLeft(originalSidebar);
+                returnAction.run();
+                dialog.close();
             } catch (CustomException ex) {
-                popup.close();
-                showAlert("Delete Failed", ex.getMessage());
+                errorLabel.setText((ex.getMessage() != null ? ex.getMessage() : "Failed to delete. Please try again."));
+                errorLabel.setTextFill(Color.web("#ff9999"));
+                errorLabel.setVisible(true);
+                errorLabel.setManaged(true);
             }
         });
 
-        // NO button — light green
-        final String noDefault =
-                "-fx-background-color: #b8e6b0; -fx-text-fill: #1a5c14;"
-                + " -fx-background-radius: 30; -fx-padding: 12 30; -fx-cursor: hand;";
-        final String noHover =
-                "-fx-background-color: #8fcf87; -fx-text-fill: #0d3d08;"
-                + " -fx-background-radius: 30; -fx-padding: 12 30; -fx-cursor: hand;";
+        VBox buttonBox = new VBox(10);
+        buttonBox.setAlignment(Pos.CENTER);
+        buttonBox.getChildren().addAll(cancelBtn, deleteBtn);
 
-        Button noBtn = new Button("NO");
-        noBtn.setPrefWidth(180);
-        noBtn.setFont(Font.font("Serif", 18));
-        noBtn.setStyle(noDefault);
-        noBtn.setOnMouseEntered(e -> noBtn.setStyle(noHover));
-        noBtn.setOnMouseExited(e  -> noBtn.setStyle(noDefault));
-        noBtn.setOnAction(e -> popup.close());
+        HBox topBar = new HBox();
+        topBar.setAlignment(Pos.TOP_RIGHT);
 
-        root.getChildren().addAll(titleLbl, msgLbl, yesBtn, noBtn);
+        Button closeBtn = new Button("X");
+        String xBarNormal = "-fx-background-color: transparent; -fx-text-fill: #1A438E; -fx-font-size: 18; -fx-cursor: hand;";
+        String xBarHover = "-fx-background-color: transparent; -fx-text-fill: red; -fx-font-size: 18; -fx-cursor: hand; -fx-background-radius: 0 10 0 0;";
 
-        Scene scene = new Scene(root, 320, 360);
-        scene.setFill(Color.web("#eef1fa"));
-        popup.setScene(scene);
-        popup.showAndWait();
+        closeBtn.setStyle(xBarNormal);
+        closeBtn.setOnAction(e -> dialog.close());
+        closeBtn.setOnMouseEntered(e -> closeBtn.setStyle(xBarHover));
+        closeBtn.setOnMouseExited(e -> closeBtn.setStyle(xBarNormal));
+
+        topBar.getChildren().add(closeBtn);
+        VBox.setMargin(topBar, new Insets(5, -30, 0, 0));
+        container.getChildren().addAll(topBar, title, description, errorLabel, buttonBox);
+
+        Scene scene = new Scene(container, 300, 500);
+        scene.setFill(Color.TRANSPARENT);
+        dialog.setScene(scene);
+        dialog.setResizable(false);
+        dialog.show();
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Helpers
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Navigates back after a save or delete.
-     * If onNavigateBack is provided, it is called (so the caller can rebuild
-     * a fresh list). Otherwise, the stale prevContent node is restored.
-     */
     private static void navigateBack(BorderPane mainLayout, Node savedSidebar,
                                      Node prevContent, Runnable onNavigateBack) {
         mainLayout.setLeft(savedSidebar);
@@ -484,10 +441,6 @@ public class CardDetailPanel {
         }
     }
 
-    /**
-     * Creates a non-editable TextArea pre-filled with the given text.
-     * Background and text colors can be configured for question vs answer.
-     */
     private static TextArea buildTextArea(String text, String bgColor, String textColor) {
         TextArea ta = new TextArea(text);
         ta.setEditable(false);
@@ -501,29 +454,18 @@ public class CardDetailPanel {
         return ta;
     }
 
-    /**
-     * Creates a non-editable TextField pre-filled with the difficulty value.
-     */
+   
     private static TextField buildDiffField(String difficulty) {
         TextField tf = new TextField(difficulty);
         tf.setEditable(false);
         tf.setFocusTraversable(false);
         return tf;
     }
-
-    /** Styled info label matching the original design. */
+    
     private static Label infoLabel(String text) {
         Label lbl = new Label(text);
-        lbl.setFont(Font.font("Serif", 21));
+        lbl.setFont(UiScale.bodyFont(21));
         return lbl;
     }
-
-    /** Displays a simple error/info dialog. */
-    private static void showAlert(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
-    }
 }
+
